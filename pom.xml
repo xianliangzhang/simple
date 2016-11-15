@@ -12,6 +12,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.compiler.source.version>1.8</project.compiler.source.version>
+    <project.compiler.target.version></project.compiler.target.version>
   </properties>
 
   <dependencies>
@@ -22,4 +24,19 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <source>${project.compiler.source.version}</source>
+          <target>${project.compiler.target.version}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+
+  </build>
 </project>
