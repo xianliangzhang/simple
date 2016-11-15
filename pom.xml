@@ -38,5 +38,12 @@
       </plugin>
     </plugins>
 
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <testSourceDirectory>/src/test/java</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/resource</directory>
+      </resource>
+    </resources>
   </build>
 </project>
