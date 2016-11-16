@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.compiler.source.version>1.8</project.compiler.source.version>
-    <project.compiler.target.version></project.compiler.target.version>
+    <project.compiler.target.version>1.8</project.compiler.target.version>
   </properties>
 
   <dependencies>
