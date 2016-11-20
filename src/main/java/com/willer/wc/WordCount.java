@@ -13,11 +13,10 @@ import org.apache.hadoop.util.GenericOptionsParser;
  * Created by Hack on 2016/11/16.
  */
 public class WordCount {
-
     public static void main(String... args) throws Exception {
         Configuration conf = new Configuration();
         String[] otherArgs = (new GenericOptionsParser(conf, args)).getRemainingArgs();
-        if(otherArgs.length < 2) {
+        if (otherArgs.length < 2) {
             System.err.println("Usage: WordCount <in> <out>");
             System.exit(2);
         }
@@ -32,8 +31,6 @@ public class WordCount {
         FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
         FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
-        System.exit(job.waitForCompletion(true)?0:1);
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
-
-
 }
