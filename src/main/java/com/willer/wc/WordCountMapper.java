@@ -13,14 +13,12 @@ import java.util.StringTokenizer;
  */
 public class WordCountMapper extends Mapper<Object, Text, Text, IntWritable> {
     private static final IntWritable one = new IntWritable(1);
-    private Text word = new Text();
 
     @Override
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         StringTokenizer itr = new StringTokenizer(value.toString());
         while (itr.hasMoreTokens()) {
-            word.set(itr.nextToken());
-            context.write(word, one);
+            context.write(new Text(itr.nextToken()), one);
         }
     }
 }
