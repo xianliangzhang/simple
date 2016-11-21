@@ -1,5 +1,7 @@
 package com.willer;
 
+import com.willer.wc.WordCount;
+import com.willer.weather.MaxTemperature;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -24,10 +26,20 @@ public class AppTest extends TestCase {
         return new TestSuite(AppTest.class);
     }
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp() {
-        assertTrue(true);
+    public void testMaxTemperature() {
+        try {
+            MaxTemperature.main("/Users/Hack/lab/input/", "/Users/Hack/lab/output");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+    public void testWordCount() {
+        try {
+            WordCount.main("/Users/Hack/lab/input/", "/Users/Hack/lab/output");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
