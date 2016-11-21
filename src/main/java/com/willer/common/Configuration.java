@@ -1,9 +1,9 @@
 package com.willer.common;
 
+import com.oracle.tools.packager.IOUtils;
 import org.apache.log4j.Logger;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.Properties;
 
 /**
@@ -12,15 +12,39 @@ import java.util.Properties;
 public class Configuration {
     private static final Logger RUN_LOG = Logger.getLogger(Configuration.class);
     private static final Properties properties = new Properties();
+    private static final String DEFAULT_CONFIG_FILE = "config.properties";
 
     // 一次性加载所有配置文件中的信息
     static {
-        try (Reader reader = new InputStreamReader(Configuration.class.getClassLoader().getResourceAsStream("config.properties"), "UTF-8")) {
+        loadFile("config.properties");
+    }
+
+    private static void loadFile(String filePath) {
+        Reader reader = null;
+        try {
+            if (filePath.equals(DEFAULT_CONFIG_FILE)) {
+                reader = new InputStreamReader(Configuration.class.getClassLoader().getResourceAsStream(filePath), "UTF-8");
+                RUN_LOG.info("Load Default Configuration Properties [config.properties]");
+            } else {
+                reader = new InputStreamReader(new FileInputStream(filePath));
+                RUN_LOG.info(String.format("Load Outer Configuration Properties [%s]", filePath));
+            }
             properties.load(reader);
-            RUN_LOG.info("Load Properties File [config.properties]");
-        } catch (Exception e) {
+        } catch (IOException e) {
             RUN_LOG.error(e.getMessage(), e);
+        } finally {
+            org.apache.commons.io.IOUtils.closeQuietly(reader);
         }
+    }
+
+    // 加载指定文件,以使优先级更高的属性覆盖优先级低的属性
+    public static void load(String file) {
+        File propertiesFile = new File(file);
+        if (!propertiesFile.exists()) {
+            RUN_LOG.warn(String.format("Properties File [%s] Not Found!", file));
+        }
+
+        loadFile(file);
     }
 
     // 禁止实例化该类
@@ -34,6 +58,8 @@ public class Configuration {
     }
 
     public static void main(String[] args) {
+        System.out.println(Configuration.get("test.key"));
+        load("/Users/Hack/lab/config.properties");
         System.out.println(Configuration.get("test.key"));
     }
 }
