@@ -1,5 +1,8 @@
 package com.willer.rmi;
 
+import com.willer.rmi.skeleton.RemoteRepertory;
+import com.willer.rmi.skeleton.inter.impl.MessageService;
+
 import java.io.Serializable;
 import java.rmi.Naming;
 import java.rmi.Remote;
@@ -81,9 +84,32 @@ public class Test {
         }
     }
 
+    static class ServerTest extends Thread {
+        public void run() {
+            try {
+                RemoteRepertory.register("MessageService", new MessageService());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static class ClientTest extends Thread {
+        public void run() {
+            try {
+                RemoteRepertory.lookup("MessageService");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-        new Server().start();
-        Thread.sleep(2000);
-        new Client().start();
+//        new Server().start();
+//        Thread.sleep(2000);
+//        new Client().start();
+
+        RemoteRepertory.register("MessageService", new MessageService());
+
     }
 }

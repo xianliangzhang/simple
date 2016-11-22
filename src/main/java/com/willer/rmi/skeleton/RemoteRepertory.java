@@ -25,7 +25,7 @@ public class RemoteRepertory {
         }
     }
 
-    public boolean register(String key, Remote remoteBean) {
+    public static boolean register(String key, Remote remoteBean) {
         try {
             Naming.bind(RMI_PREFIX.concat(key), remoteBean);
         } catch (Exception e) {
@@ -35,7 +35,7 @@ public class RemoteRepertory {
         return true;
     }
 
-    public Remote lookup(String key) {
+    public static Remote lookup(String key) {
         try {
             return Naming.lookup(RMI_PREFIX.concat(key));
         } catch (Exception e) {
