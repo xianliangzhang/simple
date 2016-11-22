@@ -1,5 +1,6 @@
 package com.willer.rmi;
 
+import java.io.Serializable;
 import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -12,6 +13,21 @@ import java.util.Map;
  * Created by Hack on 2016/11/22.
  */
 public class Test {
+
+    static class God implements Serializable {
+        public String name;
+        public int age;
+
+        public God(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("God [%s-%s]", name, age);
+        }
+    }
 
     interface IHello extends Remote {
         void put(String key, Object value) throws RemoteException;
@@ -27,12 +43,12 @@ public class Test {
         @Override
         public void put(String key, Object value) throws RemoteException {
             REPERTORY.put(key, value);
-            System.out.println("Put Request: " + key);
+            System.out.println(String.format(" -- Put Request [key=%s, value=%s]", key, value));
         }
 
         @Override
         public Object get(String key) throws RemoteException {
-            System.out.println("Get Request: " + key);
+            System.out.println(String.format(" -- Get Request [key=%s]", key));
             return REPERTORY.get(key);
         }
     }
@@ -42,7 +58,7 @@ public class Test {
             try {
                 IHello hello = new HelloImpl();
                 LocateRegistry.createRegistry(8888);
-                Naming.bind("rmi://localhost:8888/HelloImpl",hello);
+                Naming.bind("rmi://localhost:8888/HelloImpl", hello);
                 System.out.println("HelloImpl Bind To localhost:8888");
             } catch (Exception e) {
                 ;
@@ -54,11 +70,11 @@ public class Test {
         public void run() {
             try {
                 IHello hello =(IHello) Naming.lookup("rmi://localhost:8888/HelloImpl");
-                String key = "god";
-                String value = "GOD IS HERE!";
+                String key = "tom";
+                God value = new God("tom", 23);
 
                 hello.put(key, value);
-                System.out.println(hello.get(key));
+                System.out.println(hello.get(key).toString());
             } catch (Exception e) {
                 ;
             }
