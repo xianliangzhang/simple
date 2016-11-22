@@ -4,19 +4,16 @@ import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.server.ObjID;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Hack on 2016/11/22.
  */
 public class Test {
 
-    static interface IHello extends Remote {
+    interface IHello extends Remote {
         void put(String key, Object value) throws RemoteException;
         Object get(String key) throws RemoteException;
     }
