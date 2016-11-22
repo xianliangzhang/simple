@@ -13,9 +13,8 @@ import java.rmi.registry.LocateRegistry;
  */
 public class RemoteRepertory {
     private static final Logger RUN_LOG = Logger.getLogger(RemoteRepertory.class);
-    private static final String RMI_SERVER_HOST = Configuration.get("rmi.server.host");
     private static final String RMI_SERVER_PORT = Configuration.get("rmi.server.port");
-    private static final String RMI_PREFIX = "rmi://".concat(RMI_SERVER_HOST).concat(StringUtils.isEmpty(RMI_SERVER_PORT) ? "" : ":".concat(RMI_SERVER_PORT)).concat("/");
+    private static final String RMI_PREFIX = "rmi://localhost:".concat(RMI_SERVER_PORT).concat("/");
 
     static {
         try {

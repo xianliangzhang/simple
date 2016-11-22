@@ -1,4 +1,4 @@
-package com.willer.rmi.skeleton.inter;
+package com.willer.rmi.inter;
 
 import java.io.Serializable;
 import java.rmi.Remote;
