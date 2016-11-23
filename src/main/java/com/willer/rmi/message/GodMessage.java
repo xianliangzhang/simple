@@ -1,5 +1,7 @@
 package com.willer.rmi.message;
 
+import com.willer.common.ConfigHelper;
+
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -12,7 +14,7 @@ public class GodMessage implements Serializable {
 
     public GodMessage(String message) {
         this.messageID = UUID.randomUUID().toString();
-        this.message = message;
+        this.message = ConfigHelper.get("rmi.test.message.prefix").concat("-").concat(message);
     }
 
     public String getMessageID() {

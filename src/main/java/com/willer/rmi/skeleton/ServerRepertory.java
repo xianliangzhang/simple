@@ -9,12 +9,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 /**
- * Created by Hack on 2016/11/22.
+ * Created by Hack on 2016/11/23.
  */
-public class RemoteRepertory {
-    private static final Logger RUN_LOG = Logger.getLogger(RemoteRepertory.class);
+public class ServerRepertory {
+    private static final Logger RUN_LOG = Logger.getLogger(ServerRepertory.class);
+    private static final String RMI_SERVER_HOST = ConfigHelper.containsKey("rmi.server.host") ? ConfigHelper.get("rmi.server.host") : "localhost";
     private static final String RMI_SERVER_PORT = ConfigHelper.containsKey("rmi.server.port") ? ConfigHelper.get("rmi.server.port") : Registry.REGISTRY_PORT+"";
-    private static final String RMI_PREFIX = "rmi://localhost:".concat(RMI_SERVER_PORT).concat("/");
+    private static final String RMI_PREFIX = "rmi://".concat(RMI_SERVER_HOST).concat(":").concat(RMI_SERVER_PORT).concat("/");
 
     static {
         try {
@@ -22,6 +23,10 @@ public class RemoteRepertory {
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
         }
+    }
+
+    private ServerRepertory() {
+
     }
 
     public static boolean register(String key, Remote remoteBean) {
@@ -32,14 +37,5 @@ public class RemoteRepertory {
             return false;
         }
         return true;
-    }
-
-    public static Remote lookup(String key) {
-        try {
-            return Naming.lookup(RMI_PREFIX.concat(key));
-        } catch (Exception e) {
-            RUN_LOG.error(e.getMessage(), e);
-        }
-        return null;
     }
 }
