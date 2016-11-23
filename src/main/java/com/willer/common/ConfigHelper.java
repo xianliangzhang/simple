@@ -56,6 +56,11 @@ public class ConfigHelper {
         return (String) properties.get(key);
     }
 
+    // 判断属性key是否存在
+    public static boolean containsKey(String key) {
+        return properties.containsKey(key);
+    }
+
     public static void main(String[] args) {
         System.out.println(ConfigHelper.get("test.key"));
         load("/Users/Hack/lab/config.properties");
