@@ -1,5 +1,6 @@
 package com.willer.common;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -11,9 +12,9 @@ import java.net.URI;
  */
 public class HdfsHelper {
     private static final Logger RUN_LOG = Logger.getLogger(HdfsHelper.class);
-    private static final String HADOOP_CLUSTER = Configuration.get("hadoop.cluster.namenode");
+    private static final String HADOOP_CLUSTER = ConfigHelper.get("hadoop.cluster.namenode");
     private static final String HDFS_CLUSTER_PREFIX = "hdfs://".concat(HADOOP_CLUSTER).concat("/");
-    private static final org.apache.hadoop.conf.Configuration DEFAULT_CONFIGURATION = new org.apache.hadoop.conf.Configuration();
+    private static final Configuration DEFAULT_CONFIGURATION = new Configuration();
 
     public static FileSystem getFileSystem() {
         try {

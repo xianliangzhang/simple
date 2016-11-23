@@ -8,10 +8,10 @@ import java.util.Properties;
 /**
  * Created by Hack on 2016/11/21.
  */
-public class Configuration {
-    private static final Logger RUN_LOG = Logger.getLogger(Configuration.class);
-    private static final Properties properties = new Properties();
+public class ConfigHelper {
+    private static final Logger RUN_LOG = Logger.getLogger(ConfigHelper.class);
     private static final String DEFAULT_CONFIG_FILE = "config.properties";
+    private static final Properties properties = new Properties();
 
     // 一次性加载所有配置文件中的信息
     static {
@@ -22,7 +22,7 @@ public class Configuration {
         Reader reader = null;
         try {
             if (filePath.equals(DEFAULT_CONFIG_FILE)) {
-                reader = new InputStreamReader(Configuration.class.getClassLoader().getResourceAsStream(filePath), "UTF-8");
+                reader = new InputStreamReader(ConfigHelper.class.getClassLoader().getResourceAsStream(filePath), "UTF-8");
                 RUN_LOG.info("Load Default Configuration Properties [config.properties]");
             } else {
                 reader = new InputStreamReader(new FileInputStream(filePath));
@@ -47,7 +47,7 @@ public class Configuration {
     }
 
     // 禁止实例化该类
-    private Configuration() {
+    private ConfigHelper() {
         throw new IllegalAccessError("ConfigUtil Cannot be Instanced!");
     }
 
@@ -57,8 +57,8 @@ public class Configuration {
     }
 
     public static void main(String[] args) {
-        System.out.println(Configuration.get("test.key"));
+        System.out.println(ConfigHelper.get("test.key"));
         load("/Users/Hack/lab/config.properties");
-        System.out.println(Configuration.get("test.key"));
+        System.out.println(ConfigHelper.get("test.key"));
     }
 }

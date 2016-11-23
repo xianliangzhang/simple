@@ -1,10 +1,9 @@
 package com.willer;
 
-import com.willer.common.Configuration;
+import com.willer.common.ConfigHelper;
 import com.willer.wc.WordCount;
 import com.willer.weather.MaxTemperature;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
-import org.apache.hadoop.io.IOUtils;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -25,7 +24,7 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
-        String hadoopCluster = Configuration.get("hadoop.cluster.namenode");
+        String hadoopCluster = ConfigHelper.get("hadoop.cluster.namenode");
         String hadoopURL = "hdfs://".concat(hadoopCluster).concat("/user/willer/input/weather.log");
         URL url = new URL(hadoopURL);
 
