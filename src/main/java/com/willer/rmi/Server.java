@@ -1,7 +1,7 @@
 package com.willer.rmi;
 
-import com.willer.common.ConfigHelper;
-import com.willer.rmi.inter.impl.MessageService;
+import com.willer.rmi.inter.message.impl.MessageService;
+import com.willer.rmi.inter.transfer.impl.TransferService;
 import com.willer.rmi.skeleton.ServerRepertory;
 import org.apache.log4j.Logger;
 
@@ -12,11 +12,10 @@ public class Server {
     private static final Logger RUN_LOG = Logger.getLogger(Server.class);
 
     public static void main(String[] args) throws Exception {
-        if (args.length > 0) {
-            ConfigHelper.load(args[0]);
-        }
-
         ServerRepertory.register("MessageService", new MessageService());
         RUN_LOG.info("MessageService Deployed!");
+
+        ServerRepertory.register("TransferService", new TransferService());
+        RUN_LOG.info("TransferService Deployed!");
     }
 }

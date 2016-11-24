@@ -1,4 +1,4 @@
-package com.willer.rmi.message;
+package com.willer.rmi.inter.message.model;
 
 import com.willer.common.ConfigHelper;
 

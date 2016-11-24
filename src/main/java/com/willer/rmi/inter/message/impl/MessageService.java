@@ -1,6 +1,6 @@
-package com.willer.rmi.inter.impl;
+package com.willer.rmi.inter.message.impl;
 
-import com.willer.rmi.inter.IMessageService;
+import com.willer.rmi.inter.message.IMessageService;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
