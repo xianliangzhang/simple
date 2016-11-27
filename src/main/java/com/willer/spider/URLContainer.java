@@ -1,12 +1,9 @@
 package com.willer.spider;
 
-import org.apache.hadoop.io.MD5Hash;
 import org.apache.log4j.Logger;
-import sun.security.provider.MD5;
 
-import java.util.*;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
