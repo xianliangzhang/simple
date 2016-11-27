@@ -49,16 +49,5 @@ public class Spider {
 
         ProcessThread PROCESS_THREAD = new ProcessThread();
         PROCESS_THREAD.start();
-
-        try {
-            TimeUnit.SECONDS.sleep(20);
-            RUN_LOG.info("TIME IS UP -^-");
-        } catch (Exception e) {
-            PROCESS_THREAD.interrupt();
-        } finally {
-            if (!PROCESS_THREAD.isInterrupted()) {
-                PROCESS_THREAD.interrupt();
-            }
-        }
     }
 }
