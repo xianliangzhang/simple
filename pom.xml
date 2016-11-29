@@ -8,7 +8,6 @@
     <packaging>jar</packaging>
 
     <name>simple</name>
-    <!--<url>https://oss.sonatype.org/service/local/</url>-->
     <repositories>
         <repository>
             <id>cloudera</id>
