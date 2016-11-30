@@ -1,72 +1,65 @@
 package com.willer.common;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
+import org.apache.log4j.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
-import java.security.Key;
-import java.security.SecureRandom;
 
 /**
  * Created by Hack on 2016/11/30.
  */
 public class DESHelper {
-    public static final String KEY_ALGORITHM = "DES";
-    public static final String CIPHER_ALGORITHM = "DES/ECB/NoPadding";
+    private static final Logger RUN_LOG = Logger.getLogger(DESHelper.class);
+    private static final String KEY_ALGORITHM = "DES";
+    private static final String CIPHER_ALGORITHM = "DES/ECB/NoPadding";
 
-    private static SecretKey keyGenerator(String keyStr) throws Exception {
-        byte input[] = hexString2Bytes(keyStr);
-        DESKeySpec desKey = new DESKeySpec(input);
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEY_ALGORITHM);
-        SecretKey secureKy = keyFactory.generateSecret(desKey);
-        return secureKy;
-    }
-
-    private static int parse(char c) {
-        if (c >= 'a') return (c - 'a' + 10) & 0x0f;
-        if (c >= 'A') return (c - 'A' + 10) & 0x0f;
-        return (c - '0') & 0x0f;
-    }
-
-    public static byte[] hexString2Bytes(String hex) {
-        byte[] b = new byte[hex.length() / 2];
-        int j = 0;
-        for (int i = 0; i < b.length; i++) {
-            char c0 = hex.charAt(j++);
-            char c1 = hex.charAt(j++);
-            b[i] = (byte) ((parse(c0) << 4) | parse(c1));
+    private static SecretKey generateSecurityKey(String keyStr) {
+        try {
+            byte input[] = Hex.decodeHex(Hex.encodeHex(keyStr.getBytes()));
+            return SecretKeyFactory.getInstance(KEY_ALGORITHM).generateSecret(new DESKeySpec(input));
+        } catch (Exception e) {
+            RUN_LOG.error(e.getMessage(), e);
         }
-        return b;
+        return null;
     }
 
-    public static String encrypt(String data, String key) throws Exception {
-        Key destKey = keyGenerator(key);
-        Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-        SecureRandom random = new SecureRandom();
-        cipher.init(Cipher.ENCRYPT_MODE, destKey, random);
-        byte[] results = cipher.doFinal(data.getBytes());
-        return Base64.encodeBase64String(results);
+    public static String encrypt(String data, String key) {
+        try {
+            if (!StringUtils.isEmpty(data) && !StringUtils.isEmpty(key)) {
+                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+                cipher.init(Cipher.ENCRYPT_MODE, generateSecurityKey(key));
+                byte[] results = cipher.doFinal(data.getBytes());
+                return Base64.encodeBase64String(results);
+            }
+        } catch (Exception e) {
+            RUN_LOG.error(e.getMessage(), e);
+        }
+        return null;
     }
 
-    /**
-     * 解密数据
-     * @param data 待解密数据
-     * @param key 密钥
-     * @return 解密后的数据
-     */
     public static String decrypt(String data, String key) throws Exception {
-        Key destKey = keyGenerator(key);
-        Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-        cipher.init(Cipher.DECRYPT_MODE, destKey);
-        return new String(cipher.doFinal(Base64.decodeBase64(data)));
+        try {
+            if (!StringUtils.isEmpty(data) && !StringUtils.isEmpty(key)) {
+                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+                cipher.init(Cipher.DECRYPT_MODE, generateSecurityKey(key));
+                return new String(cipher.doFinal(Base64.decodeBase64(data)));
+            }
+        } catch (Exception e) {
+            RUN_LOG.error(e.getMessage(), e);
+        }
+        return null;
     }
+
 
     public static void main(String[] args) throws Exception {
         String source = "amigoxie";
         System.out.println("原文: " + source);
-        String key = "A1B2C3D4E5F60708";
+        String key = "GOD#LOVES@DEVIL";
         String encryptData = encrypt(source, key);
         System.out.println("加密后: " + encryptData);
         String decryptData = decrypt(encryptData, key);

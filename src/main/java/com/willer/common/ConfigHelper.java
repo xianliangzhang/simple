@@ -1,17 +1,21 @@
 package com.willer.common;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.Properties;
 
 /**
- * Created by Hack on 2016/11/21.
+ * 1、默认读取 classpath:config.properties
+ * 2、load 方法读取外部 properties 文件时，覆盖原有属性
+ * 3、_env. 开头的key，如果属性文件未配置，则去系统环境变量查找
  */
 public class ConfigHelper {
     private static final Logger RUN_LOG = Logger.getLogger(ConfigHelper.class);
     private static final String DEFAULT_CONFIG_FILE = "config.properties";
     private static final Properties properties = new Properties();
+    private static final String ENVIRONMENT_VARIABLE_PREFIX = "_env."; // 从环境变量取
 
     // 一次性加载所有配置文件中的信息
     static {
@@ -53,7 +57,11 @@ public class ConfigHelper {
 
     // 获取配置属性
     public static String get(String key) {
-        return (String) properties.get(key);
+        String v = (String) properties.get(key);
+        if (StringUtils.isEmpty(v) && key.startsWith(ENVIRONMENT_VARIABLE_PREFIX)) {
+            v = System.getenv(key.substring(ENVIRONMENT_VARIABLE_PREFIX.length()));
+        }
+        return v;
     }
 
     // 判断属性key是否存在
