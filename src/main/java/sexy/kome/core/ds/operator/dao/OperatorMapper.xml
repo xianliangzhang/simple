@@ -5,4 +5,8 @@
     <select id="find" parameterType="long" resultType="sexy.kome.core.ds.operator.model.Operator">
         select * from operator where id = #{id}
     </select>
+
+    <insert id="save" parameterType="sexy.kome.core.ds.operator.model.Operator" useGeneratedKeys="true" keyProperty="id">
+        insert into operator(name, email) values (#{name}, #{email})
+    </insert>
 </mapper>
