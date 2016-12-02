@@ -1,19 +1,21 @@
 package sexy.kome.core.ds.operator.service;
 
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.log4j.Logger;
-import sexy.kome.core.ds.GlobalSqlSessionFactory;
 import sexy.kome.core.ds.operator.dao.OperatorMapper;
 import sexy.kome.core.ds.operator.model.Operator;
+import sexy.kome.core.helper.CacheHelper;
 
 /**
  * Created by Hack on 2016/12/1.
  */
 public class OperatorService {
     private static final Logger RUN_LOG = Logger.getLogger(OperatorService.class);
+    private static final SqlSessionFactory SQL_SESSION_FACTORY = CacheHelper.getSqlSessionFactory(CacheHelper.DBIdentifier.KOME);
 
     public Operator find(Long id) {
-        try (SqlSession session = GlobalSqlSessionFactory.openSession()) {
+        try (SqlSession session = SQL_SESSION_FACTORY.openSession()) {
             return session.getMapper(OperatorMapper.class).find(id);
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -22,7 +24,7 @@ public class OperatorService {
     }
 
     public void save(Operator operator) {
-        try (SqlSession session = GlobalSqlSessionFactory.openSession()) {
+        try (SqlSession session = SQL_SESSION_FACTORY.openSession()) {
             OperatorMapper mapper = session.getMapper(OperatorMapper.class);
             mapper.save(operator);
             session.commit();

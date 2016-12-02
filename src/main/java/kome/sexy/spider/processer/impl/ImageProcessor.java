@@ -1,19 +1,15 @@
-package com.willer.spider.processer.impl;
+package kome.sexy.spider.processer.impl;
 
-import com.willer.common.ConfigHelper;
-import com.willer.spider.processer.Processor;
+import kome.sexy.spider.processer.Processor;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.digester.Digester;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
+import sexy.kome.core.helper.ConfigHelper;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**

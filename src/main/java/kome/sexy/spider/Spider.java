@@ -1,11 +1,11 @@
-package com.willer.spider;
+package kome.sexy.spider;
 
-import com.willer.common.ConfigHelper;
-import com.willer.spider.processer.Processor;
-import com.willer.spider.processer.impl.ImageProcessor;
+import kome.sexy.spider.processer.Processor;
+import kome.sexy.spider.processer.impl.ImageProcessor;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import sexy.kome.core.helper.ConfigHelper;
 
 import java.util.HashSet;
 import java.util.Queue;
