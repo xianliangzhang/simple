@@ -1,6 +1,7 @@
 package sexy.kome.spider.service;
 
 
+import org.apache.ibatis.javassist.bytecode.CodeAttribute;
 import sexy.kome.spider.mapper.SpiderFileMapper;
 import sexy.kome.spider.mapper.SpiderURLMapper;
 import sexy.kome.spider.model.SpiderFile;
@@ -50,20 +51,23 @@ public class SpiderService {
         return new ArrayList<SpiderFile>();
     }
 
-    public void saveURL(String url) {
+    public boolean saveURL(SpiderURL spiderURL) {
+        boolean unique = true; // 当前URL是否已经存在
         try (SqlSession session = SQL_SESSION_FACTORY.openSession()) {
             SpiderURLMapper mapper = session.getMapper(SpiderURLMapper.class);
-            SpiderURL unvisitedUrl = SpiderURL.newSpiderURL(url, SpiderURLStatus.UNVISITED);
-            if (mapper.lookupBySimple(unvisitedUrl).isEmpty()) {
-                mapper.save(unvisitedUrl);
+            if (mapper.lookupBySimple(SpiderURL.newSpiderURL(spiderURL.getUrl())).isEmpty()) {
+                mapper.save(spiderURL);
                 session.commit();
-                RUN_LOG.info(String.format("URL-Saved [url=%s]", url));
+                RUN_LOG.info(String.format("URL-Saved [url=%s]", spiderURL.getUrl()));
             } else {
-                RUN_LOG.warn(String.format("URL-Visited [url=%s]", url));
+                RUN_LOG.warn(String.format("URL-Visited [url=%s]", spiderURL.getUrl()));
+                unique = false;
             }
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
+            unique = false;
         }
+        return unique;
     }
 
     public void updateURLStatus(SpiderURL spiderURL) {

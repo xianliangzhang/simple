@@ -19,10 +19,11 @@
             <if test="status != null">and status = #{status}</if>
             <if test="fromDocUrl != null">and from_doc_url = #{fromDocUrl}</if>
         </where>
+        order by create_time asc limit 10000
     </select>
 
     <insert id="save" parameterType="sexy.kome.spider.model.SpiderURL" useGeneratedKeys="true" keyProperty="id">
-        insert into spider_url(url, from_doc_url, status, create_time) values (#{url}, #{fromDocUrl}, 'unvisited', now())
+        insert into spider_url(url, from_doc_url, status, create_time) values (#{url}, #{fromDocUrl}, #{status}, now())
     </insert>
 
     <update id="updateStatus" parameterType="sexy.kome.spider.model.SpiderURL">

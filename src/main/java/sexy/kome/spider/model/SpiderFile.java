@@ -21,9 +21,13 @@ public class SpiderFile {
         return spiderFile;
     }
 
-    public static SpiderFile newSpiderFile(String md5, String identifier) {
-        SpiderFile spiderFile = newSpiderFile(md5);
+    public static SpiderFile newSpiderFile(SpiderFileType type, String fromDocRul, Long size, String identifier) {
+        SpiderFile spiderFile = new SpiderFile();
+        spiderFile.setType(type);
+        spiderFile.setFromDocUrl(fromDocRul);
         spiderFile.setFileIdentifier(identifier);
+        spiderFile.setMd5(identifier.substring(0, identifier.indexOf(".")));
+        spiderFile.setSize(size);
         return spiderFile;
     }
 

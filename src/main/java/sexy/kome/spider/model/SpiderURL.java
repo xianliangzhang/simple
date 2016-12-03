@@ -31,6 +31,13 @@ public class SpiderURL {
         return spiderURL;
     }
 
+    public static SpiderURL newSpiderURL(String url, String fromDocUrl, SpiderURLStatus status) {
+        SpiderURL spiderURL = newSpiderURL(url);
+        spiderURL.setStatus(status);
+        spiderURL.setFromDocUrl(fromDocUrl);
+        return spiderURL;
+    }
+
     public Long getId() {
         return id;
     }

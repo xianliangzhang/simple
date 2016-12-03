@@ -1,5 +1,8 @@
 package sexy.kome.spider.processer.impl;
 
+import sexy.kome.spider.Spider;
+import sexy.kome.spider.model.SpiderFile;
+import sexy.kome.spider.model.SpiderFileType;
 import sexy.kome.spider.processer.Processor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -27,13 +30,6 @@ public class ImageProcessor implements Processor {
     private static final long MAX_IMAGE_SIZE = ConfigHelper.containsKey("spider.max.image.size") ?
             Long.valueOf(ConfigHelper.get("spider.max.image.size")) : DEFAULT_MAX_IMAGE_SIZE;
 
-    static {
-        File tempImgDir = new File(STORE_IMG_DIR);
-        if (!tempImgDir.exists()) {
-            tempImgDir.mkdirs();
-        }
-    }
-
     @Override
     public void process(Document document) {
         document.select("img[src]").forEach(image -> {
@@ -46,56 +42,64 @@ public class ImageProcessor implements Processor {
     }
 
     private void download(String url) throws Exception {
-        RUN_LOG.info(String.format("Start Process Image [url=%s]", url));
+        RUN_LOG.info(String.format("Process-Image [url=%s]", url));
 
         String imageSuffix = url.substring(url.lastIndexOf(".") + 1);
         if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix)) {
-            throw new RuntimeException(String.format("Image-Suffix Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
+            RUN_LOG.warn(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
+            return;
         }
 
-        File file = new File(STORE_IMG_DIR.concat("/").concat(UUID.randomUUID().toString()).concat(".").concat(imageSuffix));
-        File tempTargetFile = transfer(new URL(url).openStream(), file);
-        RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", file.getName(), tempTargetFile.length()));
-        if (tempTargetFile.length() > MAX_IMAGE_SIZE || tempTargetFile.length() < MIN_IMAGE_SIZE) {
-            file.deleteOnExit();
-            RUN_LOG.warn(String.format("Image-Size Wrong And Deleted [Target-Min-Size=%d, Target-Max-Size=%d, Current-Size=%d]",
-                    MIN_IMAGE_SIZE, MAX_IMAGE_SIZE, tempTargetFile.length()));
+        File tempFile = new File(STORE_IMG_DIR.concat("/").concat(UUID.randomUUID().toString()).concat(".").concat(imageSuffix));
+        int fileSize = transfer(new URL(url).openStream(), tempFile);
+        RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
+        if (fileSize < MIN_IMAGE_SIZE) {
+            tempFile.deleteOnExit();
+            RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Target-Max-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, MAX_IMAGE_SIZE, fileSize));
+            return;
         }
-
-        // 取文件md5
-        InputStream inputStream = new FileInputStream(tempTargetFile);
-        String md5hex = DigestUtils.md5Hex(inputStream);
-        IOUtils.closeQuietly(inputStream);
 
         // 以md5重命名
-        File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex).concat(".").concat(imageSuffix));
+        File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex(tempFile)).concat(".").concat(imageSuffix));
         if (targetFile.exists()) {
-            targetFile.deleteOnExit();
-            RUN_LOG.warn(String.format("Target File Exists [file=%s]", targetFile.getName()));
-        } else {
-            transfer(new FileInputStream(tempTargetFile), targetFile);
-            tempTargetFile.deleteOnExit();
+            tempFile.deleteOnExit();
+            RUN_LOG.warn(String.format("Image-Exists [file=%s]", targetFile.getName()));
+            return;
         }
+
+        tempFile.renameTo(targetFile);
+        SpiderFile spiderFile = SpiderFile.newSpiderFile(SpiderFileType.IMAGE, url, Long.valueOf(fileSize), targetFile.getName());
+        Spider.SPIDER_SERVICE.saveFile(spiderFile);
     }
 
-    private File transfer(InputStream inputStream, File targetFile) throws Exception {
+    private int transfer(InputStream inputStream, File targetFile) throws Exception {
         if (!targetFile.getParentFile().exists()) {
             targetFile.getParentFile().mkdirs();
         }
 
         OutputStream outputStream = new FileOutputStream(targetFile);
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[1024];
         int readSize = -1;
+        int total = 0;
         while ((readSize = inputStream.read(buffer)) != -1) {
             outputStream.write(buffer, 0, readSize);
+            total += readSize;
         }
+        outputStream.flush();
         IOUtils.closeQuietly(inputStream);
         IOUtils.closeQuietly(outputStream);
-        return targetFile;
+        return total;
+    }
+
+    private String md5hex(File file) throws Exception {
+        InputStream inputStream = new FileInputStream(file);
+        String md5hex = DigestUtils.md5Hex(inputStream);
+        IOUtils.closeQuietly(inputStream);
+        return md5hex;
     }
 
     public static void main(String[] args) throws Exception {
-        String temp = "http://www.meinvh.com/uploads/allimg/160629/1-16062Z9310K17.jpg";
+        String temp = "http://i.meizitu.net/pfiles/img/lazy.png";
         new ImageProcessor().download(temp);
     }
 }
