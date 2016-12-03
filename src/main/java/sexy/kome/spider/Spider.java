@@ -1,7 +1,7 @@
-package kome.sexy.spider;
+package sexy.kome.spider;
 
-import kome.sexy.spider.processer.Processor;
-import kome.sexy.spider.processer.impl.ImageProcessor;
+import sexy.kome.spider.processer.Processor;
+import sexy.kome.spider.processer.impl.ImageProcessor;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

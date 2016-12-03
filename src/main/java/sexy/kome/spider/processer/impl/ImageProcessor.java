@@ -1,6 +1,6 @@
-package kome.sexy.spider.processer.impl;
+package sexy.kome.spider.processer.impl;
 
-import kome.sexy.spider.processer.Processor;
+import sexy.kome.spider.processer.Processor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
