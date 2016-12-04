@@ -54,7 +54,7 @@ public class ImageProcessor implements Processor {
         int fileSize = transfer(new URL(url).openStream(), tempFile);
         RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
         if (fileSize < MIN_IMAGE_SIZE) {
-            tempFile.deleteOnExit();
+            tempFile.delete();
             RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Target-Max-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, MAX_IMAGE_SIZE, fileSize));
             return;
         }
@@ -62,7 +62,7 @@ public class ImageProcessor implements Processor {
         // 以md5重命名
         File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex(tempFile)).concat(".").concat(imageSuffix));
         if (targetFile.exists()) {
-            tempFile.deleteOnExit();
+            tempFile.delete();
             RUN_LOG.warn(String.format("Image-Exists [file=%s]", targetFile.getName()));
             return;
         }
