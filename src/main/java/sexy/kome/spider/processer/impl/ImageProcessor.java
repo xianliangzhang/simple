@@ -1,15 +1,13 @@
 package sexy.kome.spider.processer.impl;
 
-import sexy.kome.spider.Spider;
-import sexy.kome.spider.model.SpiderFile;
-import sexy.kome.spider.model.SpiderFileType;
-import sexy.kome.spider.processer.Processor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
+import sexy.kome.spider.Spider;
+import sexy.kome.spider.processer.Processor;
 
 import java.io.*;
 import java.net.URL;
@@ -21,20 +19,20 @@ import java.util.UUID;
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
     private static final long DEFAULT_MIN_IMAGE_SIZE = 10*1024; // 默认最小下载128K的图片
-    private static final long DEFAULT_MAX_IMAGE_SIZE = 1*1024*1024*1024; // 默认最大下载1G的图片
     private static final String DEFAULT_IMAGE_SUFFIX = "jpg,jpeg,png,gif";
 
     private static final String STORE_IMG_DIR = ConfigHelper.get("spider.img.dir");
-    private static final long MIN_IMAGE_SIZE = ConfigHelper.containsKey("spider.min.image.size") ?
-            Long.valueOf(ConfigHelper.get("spider.min.image.size")) : DEFAULT_MIN_IMAGE_SIZE;
-    private static final long MAX_IMAGE_SIZE = ConfigHelper.containsKey("spider.max.image.size") ?
-            Long.valueOf(ConfigHelper.get("spider.max.image.size")) : DEFAULT_MAX_IMAGE_SIZE;
+    private static final long MIN_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.min.size") ?
+            Long.valueOf(ConfigHelper.get("spider.img.min.size")) : DEFAULT_MIN_IMAGE_SIZE;
 
     @Override
     public void process(Document document) {
         document.select("img[src]").forEach(image -> {
             try {
-                download(image.attr("abs:src"));
+                String targetImageURL = image.attr("abs:src");
+                if (targetImageURL.length() <= Spider.MAX_URL_LENGTH) {
+                    download(targetImageURL);
+                }
             } catch (Exception e) {
                 RUN_LOG.error(e.getMessage(), e);
             }
@@ -55,7 +53,7 @@ public class ImageProcessor implements Processor {
         RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
         if (fileSize < MIN_IMAGE_SIZE) {
             tempFile.delete();
-            RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Target-Max-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, MAX_IMAGE_SIZE, fileSize));
+            RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, fileSize));
             return;
         }
 
@@ -68,8 +66,6 @@ public class ImageProcessor implements Processor {
         }
 
         tempFile.renameTo(targetFile);
-        SpiderFile spiderFile = SpiderFile.newSpiderFile(SpiderFileType.IMAGE, url, Long.valueOf(fileSize), targetFile.getName());
-        Spider.getSpiderService().saveFile(spiderFile);
     }
 
     private int transfer(InputStream inputStream, File targetFile) throws Exception {
