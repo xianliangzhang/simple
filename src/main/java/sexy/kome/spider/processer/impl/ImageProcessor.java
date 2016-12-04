@@ -69,7 +69,7 @@ public class ImageProcessor implements Processor {
 
         tempFile.renameTo(targetFile);
         SpiderFile spiderFile = SpiderFile.newSpiderFile(SpiderFileType.IMAGE, url, Long.valueOf(fileSize), targetFile.getName());
-        Spider.SPIDER_SERVICE.saveFile(spiderFile);
+        Spider.getSpiderService().saveFile(spiderFile);
     }
 
     private int transfer(InputStream inputStream, File targetFile) throws Exception {

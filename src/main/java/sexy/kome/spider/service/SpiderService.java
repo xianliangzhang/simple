@@ -51,8 +51,7 @@ public class SpiderService {
         return new ArrayList<SpiderFile>();
     }
 
-    public boolean saveURL(SpiderURL spiderURL) {
-        boolean unique = true; // 当前URL是否已经存在
+    public void saveURL(SpiderURL spiderURL) {
         try (SqlSession session = SQL_SESSION_FACTORY.openSession()) {
             SpiderURLMapper mapper = session.getMapper(SpiderURLMapper.class);
             if (mapper.lookupBySimple(SpiderURL.newSpiderURL(spiderURL.getUrl())).isEmpty()) {
@@ -60,14 +59,11 @@ public class SpiderService {
                 session.commit();
                 RUN_LOG.info(String.format("URL-Saved [url=%s]", spiderURL.getUrl()));
             } else {
-                RUN_LOG.warn(String.format("URL-Visited [url=%s]", spiderURL.getUrl()));
-                unique = false;
+                RUN_LOG.warn(String.format("URL-Exists [url=%s]", spiderURL.getUrl()));
             }
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
-            unique = false;
         }
-        return unique;
     }
 
     public void updateURLStatus(SpiderURL spiderURL) {
@@ -78,8 +74,17 @@ public class SpiderService {
     }
 
     public List<SpiderURL> lookupUnvisitedURLs() {
-        try (SqlSession session = SQL_SESSION_FACTORY.openSession()){
-            return session.getMapper(SpiderURLMapper.class).lookupBySimple(SpiderURL.newSpiderURL(SpiderURLStatus.UNVISITED));
+        return lookupSpiderURLBySimple(SpiderURL.newSpiderURL(SpiderURLStatus.UNVISITED));
+    }
+
+    public SpiderURL lookupSpiderURLByURL(String url) {
+        List<SpiderURL> urls = lookupSpiderURLBySimple(SpiderURL.newSpiderURL(url));
+        return urls.isEmpty() ? null : urls.get(0);
+    }
+
+    private List<SpiderURL> lookupSpiderURLBySimple(SpiderURL simple) {
+        try (SqlSession session = SQL_SESSION_FACTORY.openSession()) {
+            return session.getMapper(SpiderURLMapper.class).lookupBySimple(simple);
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
         }

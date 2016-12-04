@@ -1,17 +1,13 @@
 package sexy.kome.spider;
 
 import org.apache.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.model.SpiderURL;
-import sexy.kome.spider.model.SpiderURLStatus;
 import sexy.kome.spider.processer.Processor;
 import sexy.kome.spider.processer.impl.ImageProcessor;
 import sexy.kome.spider.service.SpiderService;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -23,116 +19,77 @@ import java.util.concurrent.TimeUnit;
 public class Spider {
     private static final Logger RUN_LOG = Logger.getLogger(Spider.class);
     private static final String DEFAULT_SOURCE_URL = "http://www.mzitu.com/38791/4";
-    private static final Set<Processor> DOCUMENT_PROCESSORS = new HashSet<Processor>();
+    private static final Set<Class<? extends Processor>> DOCUMENT_PROCESSORS = new HashSet<Class<? extends Processor>>();
     private static final int DEFAULT_QUEUE_SIZE = 1000;
     private static final BlockingDeque<SpiderURL> UNVISITED_URLS = new LinkedBlockingDeque<SpiderURL>(DEFAULT_QUEUE_SIZE);
-    private static final Set<URLConsumer> CUSTOMER_THREADS = new HashSet<URLConsumer>();
-    public static final SpiderService SPIDER_SERVICE = new SpiderService();
+    private static final SpiderService SPIDER_SERVICE = new SpiderService();
+    private static final URLProducer URL_PRODUCER_THREAD = new URLProducer();
+    private static final Set<URLConsumer> URL_CUSTOMER_THREADS = new HashSet<URLConsumer>();
 
-    public static void registerProcessor(Processor processor) {
-        DOCUMENT_PROCESSORS.add(new ImageProcessor());
+    private Spider() {
+
     }
 
-    private static class URLConsumer extends Thread {
-        boolean running = true;
-        int tid = 0;
+    public static SpiderService getSpiderService() {
+        return SPIDER_SERVICE;
+    }
 
-        public URLConsumer(int tid) {
-            this.tid = tid;
-        }
+    public static SpiderURL getUnvisitedURL() throws Exception {
+        return UNVISITED_URLS.take();
+    }
 
-        @Override
-        public void run() {
-            while (running) {
+    public static void putUnvisitedURL(SpiderURL spiderURL) {
+        if (!UNVISITED_URLS.contains(spiderURL)) {
+            while (UNVISITED_URLS.size() > DEFAULT_QUEUE_SIZE) {
+                RUN_LOG.warn(String.format("UNVISITED-URLS Too Much [size=%d]", UNVISITED_URLS.size()));
                 try {
-                    process(UNVISITED_URLS.take());
+                    TimeUnit.MINUTES.sleep(1);
                 } catch (InterruptedException e) {
-                    running = false;
-                } catch (Exception e) {
                     RUN_LOG.error(e.getMessage(), e);
-                    running = false;
                 }
             }
+            UNVISITED_URLS.offer(spiderURL);
+            if (UNVISITED_URLS.size() > 100) {
+                RUN_LOG.warn(String.format("UNVISITED-URLS Size [size=%d]", UNVISITED_URLS.size()));
+            }
+        }
+    }
+
+    public static void registerProcessor(Class<? extends Processor> processor) {
+        DOCUMENT_PROCESSORS.add(processor);
+    }
+
+    public static void start() {
+        for (int i = 0; i < Runtime.getRuntime().availableProcessors()*2; i ++) {
+            URLConsumer customer = new URLConsumer(i, DOCUMENT_PROCESSORS);
+            URL_CUSTOMER_THREADS.add(customer);
+            customer.start();
+            RUN_LOG.info(String.format("Customer-Thread-Start.[tid=%d]", i));
         }
 
-        private void process(SpiderURL spiderURL) {
+        URLConsumer customer = new URLConsumer(1, DOCUMENT_PROCESSORS);
+        URL_CUSTOMER_THREADS.add(customer);
+        customer.start();
+        URL_PRODUCER_THREAD.start();
+        RUN_LOG.info(String.format("Prodcuer-Thread-Start."));
+    }
+
+    public static void stop() {
+        URL_PRODUCER_THREAD.interrupt();
+
+        while (!UNVISITED_URLS.isEmpty()) {
+            RUN_LOG.warn(String.format("Waiting-For-Consume-Unvisited-URLs [size=%d]", UNVISITED_URLS.size()));
             try {
-                Document document = Jsoup.connect(spiderURL.getUrl().trim()).timeout(5000).get();
-                DOCUMENT_PROCESSORS.forEach(processor -> {
-                    processor.process(document);
-                });
-
-                spiderURL.setStatus(SpiderURLStatus.VISITED);
-            } catch (Exception e) {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
                 RUN_LOG.error(e.getMessage(), e);
-                spiderURL.setStatus(SpiderURLStatus.ERROR);
-            } finally {
-                SPIDER_SERVICE.updateURLStatus(spiderURL);
             }
         }
+
+        URL_CUSTOMER_THREADS.forEach(consumer -> {
+            consumer.interrupt();
+        });
     }
-
-    private static class URLProducer extends Thread {
-        public URLProducer(String originURL) {
-            SPIDER_SERVICE.saveURL(SpiderURL.newSpiderURL(originURL, SpiderURLStatus.UNVISITED));
-        }
-
-        @Override
-        public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    List<SpiderURL> unvisitedURLs = SPIDER_SERVICE.lookupUnvisitedURLs();
-                    if (unvisitedURLs.isEmpty()) {
-                        RUN_LOG.info("No-Unvisited-URL Found, and Spider is Stop...");
-                        interruptLoop();
-                    }
-
-                    for (SpiderURL spiderURL : unvisitedURLs) {
-                        Document document = Jsoup.connect(spiderURL.getUrl().trim()).timeout(5000).get();
-                        document.select("a[href]").forEach(link -> {
-                            SpiderURL spiderUrl = SpiderURL.newSpiderURL(link.attr("abs:href"), spiderURL.getUrl(), SpiderURLStatus.UNVISITED);
-                            boolean saved = Spider.SPIDER_SERVICE.saveURL(spiderUrl);
-
-                            if (saved) {
-                                UNVISITED_URLS.offer(spiderURL);
-
-                                // URL 产能过剩,小歇3分钟
-                                if (UNVISITED_URLS.size() > DEFAULT_QUEUE_SIZE) {
-                                    try {
-                                        TimeUnit.MINUTES.sleep(3);
-                                    } catch (Exception e) {
-                                        ;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                } catch (Exception e) {
-                    RUN_LOG.error(e.getMessage(), e);
-                }
-            }
-        }
-
-        private void interruptLoop() {
-            while (!UNVISITED_URLS.isEmpty()) {
-                try {
-                    TimeUnit.SECONDS.sleep(2);
-                    RUN_LOG.warn(String.format("Customer-Thread Still Running [taskSize=%d]", UNVISITED_URLS.isEmpty()));
-                } catch (Exception e) {
-                    RUN_LOG.error(e.getMessage(), e);
-                }
-            }
-
-            CUSTOMER_THREADS.forEach(customer -> {
-                customer.interrupt();
-                RUN_LOG.info(String.format("Customer-Thread-Stopped.[tid=%d]", customer.tid));
-            });
-
-            Thread.currentThread().interrupt();
-            RUN_LOG.info("Prodcuer-Thread-Stopped.");
-        }
-    }
-
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
@@ -140,19 +97,10 @@ public class Spider {
         }
 
         // 注册文档处理器
-        Spider.registerProcessor(new ImageProcessor());
+        Spider.registerProcessor(ImageProcessor.class);
 
-        for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i ++) {
-            URLConsumer customer = new URLConsumer(i);
-            CUSTOMER_THREADS.add(customer);
-            customer.start();
-            RUN_LOG.info(String.format("Customer-Thread-Start.[tid=%d]", customer.tid));
-
-        }
-
-        // 启动URL处理器
-        String originURL = ConfigHelper.containsKey("spider.source.url") ? ConfigHelper.get("spider.source.url") : DEFAULT_SOURCE_URL;
-        new URLProducer(originURL).start();
+        // 爬呀爬,爬到外婆家
+        Spider.start();
     }
 
 }
