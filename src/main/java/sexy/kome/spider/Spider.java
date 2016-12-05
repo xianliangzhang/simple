@@ -3,6 +3,7 @@ package sexy.kome.spider;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.processer.Processor;
 import sexy.kome.spider.processer.impl.ImageProcessor;
 
@@ -16,12 +17,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Spider {
     private static final Logger RUN_LOG = Logger.getLogger(Spider.class);
-    public static final int MAX_URL_LENGTH =100;
-
-    private static final String DEFAULT_SOURCE_URL = "http://www.mzitu.com/38791/4";
     private static final Set<Processor> PROCESSORS = new HashSet<Processor>();
     private static final BlockingQueue<String> URL_VISITED = new LinkedBlockingQueue<String>();
     private static final BlockingQueue<String> URL_UNVISITED = new LinkedBlockingQueue<String>();
+    public static final int MAX_URL_LENGTH =100;
 
     private Spider(String originURL, Processor... processors) {
         URL_UNVISITED.offer(originURL);
@@ -31,13 +30,10 @@ public class Spider {
         }
     }
 
-    private void registerProcessor(Processor processor) {
-        PROCESSORS.add(processor);
-    }
-
     private void putURL(String url) {
         if (!URL_VISITED.contains(url) && !URL_UNVISITED.contains(url)) {
             URL_UNVISITED.offer(url);
+            RUN_LOG.info(String.format("---- PUT-URL ---- UNVISITED/VISITED ---- %d/%d ----", URL_UNVISITED.size(), URL_VISITED.size()));
         }
     }
 
@@ -45,6 +41,7 @@ public class Spider {
         try {
             String url = URL_UNVISITED.take();
             URL_VISITED.add(url);
+            RUN_LOG.info(String.format("---- PUT-GET ---- UNVISITED/VISITED ---- %d/%d ----\n", URL_UNVISITED.size(), URL_VISITED.size()));
             return url;
         } catch (InterruptedException e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -74,7 +71,7 @@ public class Spider {
     }
 
     public static void main(String[] args) throws Exception {
-        String originURL = args.length > 0 ? args[0] : DEFAULT_SOURCE_URL;
+        String originURL = args.length > 0 ? args[0] : ConfigHelper.get("spider.source.url");
         new Spider(originURL, new ImageProcessor()).start();
     }
 

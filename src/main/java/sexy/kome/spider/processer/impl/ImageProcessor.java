@@ -43,7 +43,7 @@ public class ImageProcessor implements Processor {
         RUN_LOG.info(String.format("Process-Image [url=%s]", url));
 
         String imageSuffix = url.substring(url.lastIndexOf(".") + 1);
-        if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix)) {
+        if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix.toLowerCase())) {
             RUN_LOG.warn(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
             return;
         }
@@ -58,14 +58,18 @@ public class ImageProcessor implements Processor {
         }
 
         // 以md5重命名
-        File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex(tempFile)).concat(".").concat(imageSuffix));
-        if (targetFile.exists()) {
+        String md5hex = md5hex(tempFile);
+        File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex).concat(".").concat(imageSuffix));
+        if (targetFile.exists() && !tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
             tempFile.delete();
             RUN_LOG.warn(String.format("Image-Exists [file=%s]", targetFile.getName()));
             return;
         }
 
-        tempFile.renameTo(targetFile);
+        // 以MD5重命名
+        if (!tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
+            tempFile.renameTo(targetFile);
+        }
     }
 
     private int transfer(InputStream inputStream, File targetFile) throws Exception {
