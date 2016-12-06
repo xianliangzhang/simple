@@ -11,6 +11,9 @@ import sexy.kome.spider.processer.Processor;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -18,8 +21,9 @@ import java.util.UUID;
  */
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
-    private static final long DEFAULT_MIN_IMAGE_SIZE = 10*1024; // 默认最小下载128K的图片
+    private static final long DEFAULT_MIN_IMAGE_SIZE = 10 * 1024; // 默认最小下载128K的图片
     private static final String DEFAULT_IMAGE_SUFFIX = "jpg,jpeg,png,gif";
+    private static final Set<String> URL_IMAGE_VISITED = new HashSet<String>();
 
     private static final String STORE_IMG_DIR = ConfigHelper.get("spider.img.dir");
     private static final long MIN_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.min.size") ?
@@ -30,8 +34,13 @@ public class ImageProcessor implements Processor {
         document.select("img[src]").forEach(image -> {
             try {
                 String targetImageURL = image.attr("abs:src");
-                if (targetImageURL.length() <= Spider.MAX_URL_LENGTH) {
-                    download(targetImageURL);
+                if (targetImageURL.length() <= Spider.MAX_URL_LENGTH && !URL_IMAGE_VISITED.contains(targetImageURL)) {
+                    boolean downloaded = download(targetImageURL);
+
+                    if (downloaded) {
+                        URL_IMAGE_VISITED.add(targetImageURL);
+                        RUN_LOG.info(String.format("---- PUT-IMAGE-URL ---- VISITED ---- %d ----", URL_IMAGE_VISITED.size()));
+                    }
                 }
             } catch (Exception e) {
                 RUN_LOG.error(e.getMessage(), e);
@@ -39,22 +48,22 @@ public class ImageProcessor implements Processor {
         });
     }
 
-    private void download(String url) throws Exception {
+    private boolean download(String url) throws Exception {
         RUN_LOG.info(String.format("Process-Image [url=%s]", url));
 
         String imageSuffix = url.substring(url.lastIndexOf(".") + 1);
         if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix.toLowerCase())) {
             RUN_LOG.warn(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
-            return;
+            return false;
         }
 
         File tempFile = new File(STORE_IMG_DIR.concat("/").concat(UUID.randomUUID().toString()).concat(".").concat(imageSuffix));
-        int fileSize = transfer(new URL(url).openStream(), tempFile);
+        int fileSize = transfer(url, tempFile);
         RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
         if (fileSize < MIN_IMAGE_SIZE) {
             tempFile.delete();
             RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, fileSize));
-            return;
+            return false;
         }
 
         // 以md5重命名
@@ -63,21 +72,26 @@ public class ImageProcessor implements Processor {
         if (targetFile.exists() && !tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
             tempFile.delete();
             RUN_LOG.warn(String.format("Image-Exists [file=%s]", targetFile.getName()));
-            return;
+            return false;
         }
 
         // 以MD5重命名
         if (!tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
             tempFile.renameTo(targetFile);
         }
+        return true;
     }
 
-    private int transfer(InputStream inputStream, File targetFile) throws Exception {
-        if (!targetFile.getParentFile().exists()) {
-            targetFile.getParentFile().mkdirs();
+    private int transfer(String url, File tempFile) throws Exception {
+        if (!new File(STORE_IMG_DIR).exists()) {
+            new File(STORE_IMG_DIR).mkdirs();
         }
 
-        OutputStream outputStream = new FileOutputStream(targetFile);
+        URLConnection urlConnection = new URL(url).openConnection();
+        urlConnection.setConnectTimeout(3000);
+        InputStream inputStream = urlConnection.getInputStream();
+
+        OutputStream outputStream = new FileOutputStream(tempFile);
         byte[] buffer = new byte[1024];
         int readSize = -1;
         int total = 0;
@@ -99,7 +113,10 @@ public class ImageProcessor implements Processor {
     }
 
     public static void main(String[] args) throws Exception {
-        String temp = "http://i.meizitu.net/pfiles/img/lazy.png";
-        new ImageProcessor().download(temp);
+        String temp = "http://pic.yiipic.com/pic/3583.jpg";
+
+        Object obj = new URL(temp).openConnection().getContent();
+
+        System.out.println("OK");
     }
 }

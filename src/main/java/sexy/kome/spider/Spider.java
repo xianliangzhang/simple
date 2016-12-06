@@ -18,14 +18,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Spider {
     private static final Logger RUN_LOG = Logger.getLogger(Spider.class);
     private static final Set<Processor> PROCESSORS = new HashSet<Processor>();
-    private static final BlockingQueue<String> URL_VISITED = new LinkedBlockingQueue<String>();
+    private static final Set<String> URL_VISITED = new HashSet<String>();
     private static final BlockingQueue<String> URL_UNVISITED = new LinkedBlockingQueue<String>();
-    public static final int MAX_URL_LENGTH =100;
+    public static final int MAX_URL_LENGTH = 100;
 
     private Spider(String originURL, Processor... processors) {
         URL_UNVISITED.offer(originURL);
 
-        for (int i = 0; i < processors.length; i ++) {
+        for (int i = 0; i < processors.length; i++) {
             PROCESSORS.add(processors[i]);
         }
     }
