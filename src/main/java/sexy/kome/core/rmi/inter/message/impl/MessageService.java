@@ -1,6 +1,6 @@
 package sexy.kome.core.rmi.inter.message.impl;
 
-import com.willer.rmi.inter.message.IMessageService;
+import sexy.kome.core.rmi.inter.message.IMessageService;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;

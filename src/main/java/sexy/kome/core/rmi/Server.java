@@ -1,9 +1,9 @@
 package sexy.kome.core.rmi;
 
-import com.willer.rmi.inter.message.impl.MessageService;
-import com.willer.rmi.inter.transfer.impl.TransferService;
-import com.willer.rmi.skeleton.ServerRepertory;
 import org.apache.log4j.Logger;
+import sexy.kome.core.rmi.inter.message.impl.MessageService;
+import sexy.kome.core.rmi.inter.transfer.impl.TransferService;
+import sexy.kome.core.rmi.skeleton.ServerRepertory;
 
 /**
  * Created by Hack on 2016/11/23.
