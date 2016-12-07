@@ -49,20 +49,20 @@ public class ImageProcessor implements Processor {
     }
 
     private boolean download(String url) throws Exception {
-        RUN_LOG.info(String.format("Process-Image [url=%s]", url));
+        RUN_LOG.debug(String.format("Process-Image [url=%s]", url));
 
         String imageSuffix = url.substring(url.lastIndexOf(".") + 1);
         if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix.toLowerCase())) {
-            RUN_LOG.warn(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
+            RUN_LOG.debug(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
             return false;
         }
 
         File tempFile = new File(STORE_IMG_DIR.concat("/").concat(UUID.randomUUID().toString()).concat(".").concat(imageSuffix));
         int fileSize = transfer(url, tempFile);
-        RUN_LOG.info(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
+        RUN_LOG.debug(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
         if (fileSize < MIN_IMAGE_SIZE) {
             tempFile.delete();
-            RUN_LOG.warn(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, fileSize));
+            RUN_LOG.debug(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, fileSize));
             return false;
         }
 
@@ -71,7 +71,7 @@ public class ImageProcessor implements Processor {
         File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex).concat(".").concat(imageSuffix));
         if (targetFile.exists() && !tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
             tempFile.delete();
-            RUN_LOG.warn(String.format("Image-Exists [file=%s]", targetFile.getName()));
+            RUN_LOG.debug(String.format("Image-Exists [file=%s]", targetFile.getName()));
             return false;
         }
 

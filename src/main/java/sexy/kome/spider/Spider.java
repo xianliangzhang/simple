@@ -41,7 +41,7 @@ public class Spider {
         try {
             String url = URL_UNVISITED.take();
             URL_VISITED.add(url);
-            RUN_LOG.info(String.format("---- GET-URL ---- UNVISITED/VISITED ---- %d/%d ----\n", URL_UNVISITED.size(), URL_VISITED.size()));
+            RUN_LOG.info(String.format("---- GET-URL ---- UNVISITED/VISITED ---- %d/%d ----", URL_UNVISITED.size(), URL_VISITED.size()));
             return url;
         } catch (InterruptedException e) {
             RUN_LOG.error(e.getMessage(), e);
