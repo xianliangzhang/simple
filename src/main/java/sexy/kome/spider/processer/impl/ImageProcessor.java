@@ -4,6 +4,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.hadoop.hdfs.util.MD5FileUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
@@ -83,13 +84,13 @@ public class ImageProcessor implements Processor {
             } finally {
                 inputStream.close();
                 outputStream.close();
+                IOUtils.close(urlConnection);
             }
             return tempFile.exists() ? tempFile : null;
         }
         return null;
     }
 
-    //http://www.pp3.cn/uploads/201609/2016092307.jpg
     private File validate(File file) throws Exception {
         if (null != file) {
             if (file.length() < MIN_IMAGE_SIZE || file.length() > MAX_IMAGE_SIZE) {
@@ -106,9 +107,10 @@ public class ImageProcessor implements Processor {
         return file;
     }
 
+    // 按文件MD5值对文件重命名
     private File rename2md5hex(File file) throws Exception {
         if (null != file) {
-            File targetMD5File = new File(getAbsFileName(md5hex(file).concat(file.getName().substring(file.getName().lastIndexOf(".")))));
+            File targetMD5File = new File(getAbsFileName(MD5FileUtils.computeMd5ForFile(file).toString().concat(file.getName().substring(file.getName().lastIndexOf(".")))));
             if (targetMD5File.exists()) {
                 file.delete();
                 RUN_LOG.info(String.format("FILE-EXISTS [md5=%s]", targetMD5File.getName()));
@@ -119,13 +121,6 @@ public class ImageProcessor implements Processor {
             }
         }
         return file;
-    }
-
-    private String md5hex(File file) throws Exception {
-        InputStream inputStream = new FileInputStream(file);
-        String md5hex = DigestUtils.md5Hex(inputStream);
-        IOUtils.closeQuietly(inputStream);
-        return md5hex;
     }
 
     private String getAbsFileName(String fileName) {
@@ -143,6 +138,5 @@ public class ImageProcessor implements Processor {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
