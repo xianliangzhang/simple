@@ -3,6 +3,7 @@ package sexy.kome.spider.processer.impl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
@@ -25,8 +26,8 @@ public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
     private static final long DEFAULT_MIN_IMAGE_SIZE = 128 * 1024; // 默认最小下载128K的图片
     private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024; // 默认最小下载1024K的图片
-    private static final long DEFAULT_MIN_IMAGE_WIDTH = 800; // 默认最小下载1024K的图片
-    private static final long DEFAULT_MIN_IMAGE_HEIGHT = 600; // 默认最小下载1024K的图片
+    private static final long DEFAULT_MIN_IMAGE_WIDTH = 600; // 默认最小下载1024K的图片
+    private static final long DEFAULT_MIN_IMAGE_HEIGHT = 400; // 默认最小下载1024K的图片
     private static final String DEFAULT_IMAGE_SUFFIX = ".jpg,.jpeg,.png,.gif";
     private static final Set<String> URL_IMAGE_VISITED = new HashSet<String>();
 
@@ -46,19 +47,7 @@ public class ImageProcessor implements Processor {
         document.select("img[src]").forEach(image -> {
             try {
                 String targetImageURL = image.attr("abs:src");
-                File targetImageFile = download(targetImageURL);
-
-                if (targetImageFile != null) {
-                    BufferedImage bufferedImage = ImageIO.read(targetImageFile);
-                    if (bufferedImage.getWidth() < MIN_IMAGE_WIDTH || bufferedImage.getHeight() < MIN_IMAGE_HEIGHT) {
-                        targetImageFile.delete();
-                        targetImageFile = null;
-                        RUN_LOG.warn(String.format("Wrong-Image-Size [width=%d, height=%d, target-min-width=%d, target-min-height=%d]",
-                                bufferedImage.getWidth(), bufferedImage.getHeight(), MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT));
-                    } else {
-                        targetImageFile = rename2md5hex(targetImageFile);
-                    }
-                }
+                File targetImageFile = rename2md5hex(validate(download(targetImageURL)));
 
                 if (null != targetImageFile) {
                     URL_IMAGE_VISITED.add(targetImageURL);
@@ -70,26 +59,14 @@ public class ImageProcessor implements Processor {
         });
     }
 
-    private File rename2md5hex(File file) throws Exception {
-        File targetMD5File = new File(getAbsFileName(md5hex(file).concat(file.getName().substring(file.getName().lastIndexOf(".")))));
-        if (targetMD5File.exists()) {
-            file.delete();
-            RUN_LOG.error(String.format("FILE-EXISTS [md5=%s]", targetMD5File.getName()));
-            targetMD5File = null;
-        } else {
-            file.renameTo(targetMD5File);
-            return targetMD5File;
-        }
-        return targetMD5File;
-    }
-
     private File download(String url) throws Exception {
         if (url.length() <= Spider.MAX_URL_LENGTH && !URL_IMAGE_VISITED.contains(url) &&
                 url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf(".")))) {
-            String tempFileName= getAbsFileName(UUID.randomUUID().toString().concat(".").concat(url.substring(url.lastIndexOf("."))));
+            String tempFileName= getAbsFileName(UUID.randomUUID().toString().concat(url.substring(url.lastIndexOf("."))));
             File tempFile = new File(tempFileName);
 
             URLConnection urlConnection = new URL(url).openConnection();
+            urlConnection.setConnectTimeout(1000);
             InputStream inputStream = urlConnection.getInputStream();
             OutputStream outputStream = new FileOutputStream(tempFile);
             try {
@@ -112,6 +89,38 @@ public class ImageProcessor implements Processor {
         return null;
     }
 
+    //http://www.pp3.cn/uploads/201609/2016092307.jpg
+    private File validate(File file) throws Exception {
+        if (null != file) {
+            if (file.length() < MIN_IMAGE_SIZE || file.length() > MAX_IMAGE_SIZE) {
+                file.delete();
+                return null;
+            }
+
+            BufferedImage bufferedImage = ImageIO.read(file);
+            if (bufferedImage == null || bufferedImage.getWidth() < MIN_IMAGE_WIDTH || bufferedImage.getHeight() < MIN_IMAGE_HEIGHT) {
+                file.delete();
+                return null;
+            }
+        }
+        return file;
+    }
+
+    private File rename2md5hex(File file) throws Exception {
+        if (null != file) {
+            File targetMD5File = new File(getAbsFileName(md5hex(file).concat(file.getName().substring(file.getName().lastIndexOf(".")))));
+            if (targetMD5File.exists()) {
+                file.delete();
+                RUN_LOG.info(String.format("FILE-EXISTS [md5=%s]", targetMD5File.getName()));
+                return null;
+            } else {
+                file.renameTo(targetMD5File);
+                return targetMD5File;
+            }
+        }
+        return file;
+    }
+
     private String md5hex(File file) throws Exception {
         InputStream inputStream = new FileInputStream(file);
         String md5hex = DigestUtils.md5Hex(inputStream);
@@ -125,6 +134,15 @@ public class ImageProcessor implements Processor {
 
     public static void main(String[] args) throws Exception {
         String temp = "http://t1.mmonly.com/mmonly/2014/201412/301/slt.jpg";
-        new ImageProcessor().download(temp);
+
+        try {
+        ImageProcessor processor = new ImageProcessor();
+        File tt = processor.rename2md5hex(processor.validate(processor.download(temp)));
+        System.out.println(tt);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }
