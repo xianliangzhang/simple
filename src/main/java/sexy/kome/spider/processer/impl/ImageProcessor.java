@@ -1,5 +1,6 @@
 package sexy.kome.spider.processer.impl;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hdfs.util.MD5FileUtils;
 import org.apache.log4j.Logger;
@@ -14,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +66,9 @@ public class ImageProcessor implements Processor {
     public File download(String url) {
         try {
             File downloadFile = new File(getAbsFileName(UUID.randomUUID().toString().concat(url.substring(url.lastIndexOf(".")))));
-            InputStream inputStream = new URL(url).openStream();
+            URLConnection urlConnection = new URL(url).openConnection();
+            urlConnection.setConnectTimeout(3000);
+            InputStream inputStream = urlConnection.getInputStream();
             OutputStream outputStream = new FileOutputStream(downloadFile);
 
             byte[] buffer = new byte[1024];
@@ -73,9 +77,9 @@ public class ImageProcessor implements Processor {
                 outputStream.write(buffer, 0, readSize);
             }
 
-            inputStream.close();
-            outputStream.close();
-
+            IOUtils.closeQuietly(inputStream);
+            IOUtils.closeQuietly(outputStream);
+            IOUtils.close(urlConnection);
             RUN_LOG.info(String.format("Image-Download [url=%s, file=%s, size=%d]", url, downloadFile.getName(), downloadFile.length()));
             return downloadFile;
         } catch (Exception e) {
