@@ -47,8 +47,17 @@ public class ImageProcessor implements Processor {
             try {
                 String targetImageURL = image.attr("abs:src");
                 File targetImageFile = download(targetImageURL);
+
                 if (targetImageFile != null) {
-                    targetImageFile = rename2md5hex(targetImageFile);
+                    BufferedImage bufferedImage = ImageIO.read(targetImageFile);
+                    if (bufferedImage.getWidth() < MIN_IMAGE_WIDTH || bufferedImage.getHeight() < MIN_IMAGE_HEIGHT) {
+                        targetImageFile.delete();
+                        targetImageFile = null;
+                        RUN_LOG.warn(String.format("Wrong-Image-Size [width=%d, height=%d, target-min-width=%d, target-min-height=%d]",
+                                bufferedImage.getWidth(), bufferedImage.getHeight(), MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT));
+                    } else {
+                        targetImageFile = rename2md5hex(targetImageFile);
+                    }
                 }
 
                 if (null != targetImageFile) {
