@@ -8,8 +8,6 @@ import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.processer.Processor;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -25,7 +23,7 @@ import java.util.UUID;
  */
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
-    private static final long DEFAULT_MIN_IMAGE_SIZE = 10 * 1024; // 默认最小下载128K的图片
+    private static final long DEFAULT_MIN_IMAGE_SIZE = 50 * 1024; // 默认最小下载128K的图片
     private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024 * 10; // 默认最小下载10M的图片
     private static final long DEFAULT_MIN_IMAGE_WIDTH = 600; // 默认最小下载1024K的图片
     private static final long DEFAULT_MIN_IMAGE_HEIGHT = 400; // 默认最小下载1024K的图片
@@ -50,7 +48,7 @@ public class ImageProcessor implements Processor {
                 String url = image.attr("abs:src");
                 if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !URL_IMAGE_VISITED.contains(url)) {
                     RUN_LOG.info(String.format("Start-Process-URL [url=%s]", url));
-                    File targetImageFile = rename2md5hex(validate(download(url)));
+                    File targetImageFile = rename2md5hex(download(url));
 
                     if (null != targetImageFile) {
                         URL_IMAGE_VISITED.add(url);
@@ -73,44 +71,30 @@ public class ImageProcessor implements Processor {
 
             byte[] buffer = new byte[1024];
             int readSize = -1;
+            int totalSize = 0;
             while ((readSize = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, readSize);
+                totalSize += readSize;
             }
 
+            outputStream.flush();
             IOUtils.closeQuietly(inputStream);
             IOUtils.closeQuietly(outputStream);
             IOUtils.close(urlConnection);
-            RUN_LOG.info(String.format("Image-Download [url=%s, file=%s, size=%d]", url, downloadFile.getName(), downloadFile.length()));
-            return downloadFile;
+
+            // 校验文件大小
+            if (totalSize < MIN_IMAGE_SIZE || totalSize > MAX_IMAGE_SIZE) {
+                RUN_LOG.warn(String.format("Image-Size-Out-Min-Bounds [current-size=%d, target-min-size=%d, target-max-size=%d]", totalSize, MIN_IMAGE_SIZE, MAX_IMAGE_SIZE));
+                downloadFile.delete();
+                return null;
+            } else {
+                RUN_LOG.info(String.format("Image-Download [url=%s, file=%s, size=%d]", url, downloadFile.getName(), downloadFile.length()));
+                return downloadFile;
+            }
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
             return null;
         }
-    }
-
-    private File validate(File file) throws Exception {
-        if (file.exists() && (file.length() < MIN_IMAGE_SIZE || file.length() > MAX_IMAGE_SIZE)) {
-            file.delete();
-            RUN_LOG.warn(String.format("Image-Size-Out-Min-Bounds [current-size=%d, target-min-size=%d, target-max-size=%d]", file.length(), MIN_IMAGE_SIZE, MAX_IMAGE_SIZE));
-        }
-
-        if (file.exists()) {
-            BufferedImage bufferedImage = ImageIO.read(file);
-            if (bufferedImage == null || bufferedImage.getWidth() < MIN_IMAGE_WIDTH || bufferedImage.getHeight() < MIN_IMAGE_HEIGHT) {
-                file.delete();
-                RUN_LOG.debug(String.format("Image-Size-Out-Min-Bounds [current-width=%d, current-Height=%d, target-width=%s, target-height=%d]",
-                        bufferedImage.getWidth(), bufferedImage.getHeight(), MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT));
-            }
-        }
-        if (null != file) {
-            BufferedImage bufferedImage = ImageIO.read(file);
-            if (bufferedImage == null || bufferedImage.getWidth() < MIN_IMAGE_WIDTH || bufferedImage.getHeight() < MIN_IMAGE_HEIGHT) {
-                file.delete();
-                RUN_LOG.debug(String.format("Wrong-Size [current-width=%d, current-Height=%d, target-width=%s, target-height=%d]",
-                        bufferedImage.getWidth(), bufferedImage.getHeight(), MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT));
-            }
-        }
-        return file.exists() ? file : null;
     }
 
     // 按文件MD5值对文件重命名
