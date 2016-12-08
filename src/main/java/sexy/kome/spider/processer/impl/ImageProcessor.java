@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
-    private static final long DEFAULT_MIN_IMAGE_SIZE = 10 * 1024; // 默认最小下载128K的图片
+    private static final long DEFAULT_MIN_IMAGE_SIZE = 128 * 1024; // 默认最小下载128K的图片
     private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024; // 默认最小下载1024K的图片
     private static final long DEFAULT_MIN_IMAGE_WIDTH = 800; // 默认最小下载1024K的图片
     private static final long DEFAULT_MIN_IMAGE_HEIGHT = 600; // 默认最小下载1024K的图片
