@@ -9,6 +9,8 @@ import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.Spider;
 import sexy.kome.spider.processer.Processor;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
@@ -22,25 +24,36 @@ import java.util.UUID;
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
     private static final long DEFAULT_MIN_IMAGE_SIZE = 10 * 1024; // 默认最小下载128K的图片
-    private static final String DEFAULT_IMAGE_SUFFIX = "jpg,jpeg,png,gif";
+    private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024; // 默认最小下载1024K的图片
+    private static final long DEFAULT_MIN_IMAGE_WIDTH = 800; // 默认最小下载1024K的图片
+    private static final long DEFAULT_MIN_IMAGE_HEIGHT = 600; // 默认最小下载1024K的图片
+    private static final String DEFAULT_IMAGE_SUFFIX = ".jpg,.jpeg,.png,.gif";
     private static final Set<String> URL_IMAGE_VISITED = new HashSet<String>();
 
     private static final String STORE_IMG_DIR = ConfigHelper.get("spider.img.dir");
     private static final long MIN_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.min.size") ?
             Long.valueOf(ConfigHelper.get("spider.img.min.size")) : DEFAULT_MIN_IMAGE_SIZE;
+    private static final long MAX_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.max.size") ?
+            Long.valueOf(ConfigHelper.get("spider.img.max.size")) : DEFAULT_MAX_IMAGE_SIZE;
+
+    private static final long MIN_IMAGE_WIDTH = ConfigHelper.containsKey("spider.img.min.width") ?
+            Long.valueOf(ConfigHelper.get("spider.img.min.width")) : DEFAULT_MIN_IMAGE_WIDTH;
+    private static final long MIN_IMAGE_HEIGHT = ConfigHelper.containsKey("spider.img.max.height") ?
+            Long.valueOf(ConfigHelper.get("spider.img.max.height")) : DEFAULT_MIN_IMAGE_HEIGHT;
 
     @Override
     public void process(Document document) {
         document.select("img[src]").forEach(image -> {
             try {
                 String targetImageURL = image.attr("abs:src");
-                if (targetImageURL.length() <= Spider.MAX_URL_LENGTH && !URL_IMAGE_VISITED.contains(targetImageURL)) {
-                    boolean downloaded = download(targetImageURL);
+                File targetImageFile = download(targetImageURL);
+                if (targetImageFile != null) {
+                    targetImageFile = rename2md5hex(targetImageFile);
+                }
 
-                    if (downloaded) {
-                        URL_IMAGE_VISITED.add(targetImageURL);
-                        RUN_LOG.info(String.format("---- PUT-IMAGE-URL ---- VISITED ---- %d ----", URL_IMAGE_VISITED.size()));
-                    }
+                if (null != targetImageFile) {
+                    URL_IMAGE_VISITED.add(targetImageURL);
+                    RUN_LOG.info(String.format("PUT-IMAGE-URL [VISITED=%d]", URL_IMAGE_VISITED.size()));
                 }
             } catch (Exception e) {
                 RUN_LOG.error(e.getMessage(), e);
@@ -48,61 +61,46 @@ public class ImageProcessor implements Processor {
         });
     }
 
-    private boolean download(String url) throws Exception {
-        RUN_LOG.debug(String.format("Process-Image [url=%s]", url));
-
-        String imageSuffix = url.substring(url.lastIndexOf(".") + 1);
-        if (StringUtils.isEmpty(imageSuffix) || !DEFAULT_IMAGE_SUFFIX.contains(imageSuffix.toLowerCase())) {
-            RUN_LOG.debug(String.format("Image-Suffix-Wrong [Target-Suffix=%s, Current-Suffix=%s]", DEFAULT_IMAGE_SUFFIX, imageSuffix));
-            return false;
+    private File rename2md5hex(File file) throws Exception {
+        File targetMD5File = new File(getAbsFileName(md5hex(file).concat(file.getName().substring(file.getName().lastIndexOf(".")))));
+        if (targetMD5File.exists()) {
+            file.delete();
+            RUN_LOG.error(String.format("FILE-EXISTS [md5=%s]", targetMD5File.getName()));
+            targetMD5File = null;
+        } else {
+            file.renameTo(targetMD5File);
+            return targetMD5File;
         }
-
-        File tempFile = new File(STORE_IMG_DIR.concat("/").concat(UUID.randomUUID().toString()).concat(".").concat(imageSuffix));
-        int fileSize = transfer(url, tempFile);
-        RUN_LOG.debug(String.format("Image-Download [image=%s, size=%d]", tempFile.getName(), fileSize));
-        if (fileSize < MIN_IMAGE_SIZE) {
-            tempFile.delete();
-            RUN_LOG.debug(String.format("Image-Size-Wrong And Deleted [Target-Min-Size=%d, Current-Size=%d]", MIN_IMAGE_SIZE, fileSize));
-            return false;
-        }
-
-        // 以md5重命名
-        String md5hex = md5hex(tempFile);
-        File targetFile = new File(STORE_IMG_DIR.concat("/").concat(md5hex).concat(".").concat(imageSuffix));
-        if (targetFile.exists() && !tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
-            tempFile.delete();
-            RUN_LOG.debug(String.format("Image-Exists [file=%s]", targetFile.getName()));
-            return false;
-        }
-
-        // 以MD5重命名
-        if (!tempFile.getName().equalsIgnoreCase(targetFile.getName())) {
-            tempFile.renameTo(targetFile);
-        }
-        return true;
+        return targetMD5File;
     }
 
-    private int transfer(String url, File tempFile) throws Exception {
-        if (!new File(STORE_IMG_DIR).exists()) {
-            new File(STORE_IMG_DIR).mkdirs();
-        }
+    private File download(String url) throws Exception {
+        if (url.length() <= Spider.MAX_URL_LENGTH && !URL_IMAGE_VISITED.contains(url) &&
+                url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf(".")))) {
+            String tempFileName= getAbsFileName(UUID.randomUUID().toString().concat(".").concat(url.substring(url.lastIndexOf("."))));
+            File tempFile = new File(tempFileName);
 
-        URLConnection urlConnection = new URL(url).openConnection();
-        urlConnection.setConnectTimeout(3000);
-        InputStream inputStream = urlConnection.getInputStream();
-
-        OutputStream outputStream = new FileOutputStream(tempFile);
-        byte[] buffer = new byte[1024];
-        int readSize = -1;
-        int total = 0;
-        while ((readSize = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, readSize);
-            total += readSize;
+            URLConnection urlConnection = new URL(url).openConnection();
+            InputStream inputStream = urlConnection.getInputStream();
+            OutputStream outputStream = new FileOutputStream(tempFile);
+            try {
+                if (inputStream.available() > MIN_IMAGE_SIZE && inputStream.available() < MAX_IMAGE_SIZE) {
+                    byte[] buffer = new byte[1024];
+                    int readSize = -1;
+                    while ((readSize = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, readSize);
+                    }
+                    outputStream.flush();
+                }
+            } catch (Exception e) {
+                RUN_LOG.error(e.getMessage(), e);
+            } finally {
+                inputStream.close();
+                outputStream.close();
+            }
+            return tempFile.exists() ? tempFile : null;
         }
-        outputStream.flush();
-        IOUtils.closeQuietly(inputStream);
-        IOUtils.closeQuietly(outputStream);
-        return total;
+        return null;
     }
 
     private String md5hex(File file) throws Exception {
@@ -112,11 +110,12 @@ public class ImageProcessor implements Processor {
         return md5hex;
     }
 
+    private String getAbsFileName(String fileName) {
+        return STORE_IMG_DIR.concat("/").concat(fileName);
+    }
+
     public static void main(String[] args) throws Exception {
-        String temp = "http://pic.yiipic.com/pic/3583.jpg";
-
-        Object obj = new URL(temp).openConnection().getContent();
-
-        System.out.println("OK");
+        String temp = "http://t1.mmonly.com/mmonly/2014/201412/301/slt.jpg";
+        new ImageProcessor().download(temp);
     }
 }

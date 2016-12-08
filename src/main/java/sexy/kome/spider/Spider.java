@@ -33,7 +33,7 @@ public class Spider {
     private void putURL(String url) {
         if (!URL_VISITED.contains(url) && !URL_UNVISITED.contains(url)) {
             URL_UNVISITED.offer(url);
-            RUN_LOG.info(String.format("---- PUT-URL ---- UNVISITED/VISITED ---- %d/%d ----", URL_UNVISITED.size(), URL_VISITED.size()));
+            RUN_LOG.info(String.format("PUT-URL [UNVISITED=%d, VISITED=%d]", URL_UNVISITED.size(), URL_VISITED.size()));
         }
     }
 
@@ -41,7 +41,7 @@ public class Spider {
         try {
             String url = URL_UNVISITED.take();
             URL_VISITED.add(url);
-            RUN_LOG.info(String.format("---- GET-URL ---- UNVISITED/VISITED ---- %d/%d ----", URL_UNVISITED.size(), URL_VISITED.size()));
+            RUN_LOG.info(String.format("GET-URL [UNVISITED=%d, VISITED=%d]]", URL_UNVISITED.size(), URL_VISITED.size()));
             return url;
         } catch (InterruptedException e) {
             RUN_LOG.error(e.getMessage(), e);
