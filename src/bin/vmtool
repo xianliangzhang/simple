@@ -1,0 +1,43 @@
+
+#!/bash/sh
+
+######################################################################
+#    本程序用于启动、停止一个虚拟机，或查看已经运行着的虚拟机列表
+######################################################################
+
+DEFAULT_VM_PATH="/Users/Hack/Documents/VirtualMachines/TARGET_VM.vmwarevm/"
+
+function usage() {
+	echo '
+Usage: vmtool [-l] | [-s|-p] vm
+    -s  start the vm
+    -p  stop the vm
+    -l list the vms in running 
+  '
+}
+
+function check_args() {
+  if [ $# = 1 ] && [ $1 == "-l" ]; then 
+    list_vm
+  elif [ $# = 2 ] && [ $1 == "-s" ]; then
+    start_vm ${DEFAULT_VM_PATH/TARGET_VM/$2} 
+  elif [ $# = 2 ] && [ $1 == "-p" ]; then 
+    stop_vm ${DEFAULT_VM_PATH/TARGET_VM/$2}
+  else
+    usage
+  fi
+}
+
+function start_vm() {
+  /Applications/VMware\ Fusion.app/Contents/Library/vmrun start $1 nogui
+}
+
+function stop_vm() {
+  /Applications/VMware\ Fusion.app/Contents/Library/vmrun stop $1 nogui 
+}
+
+function list_vm() {
+  /Applications/VMware\ Fusion.app/Contents/Library/vmrun list 
+}
+
+check_args $@ 
