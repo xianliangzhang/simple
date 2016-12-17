@@ -67,7 +67,7 @@ public class ImageProcessor implements Processor {
             URLConnection urlConnection = new URL(url).openConnection();
             urlConnection.setConnectTimeout(3000);
             InputStream inputStream = urlConnection.getInputStream();
-            OutputStream outputStream = new FileOutputStream(downloadFile);
+            FileOutputStream outputStream = new FileOutputStream(downloadFile);
 
             byte[] buffer = new byte[1024];
             int readSize = -1;
@@ -78,6 +78,8 @@ public class ImageProcessor implements Processor {
             }
 
             outputStream.flush();
+            outputStream.getFD().sync();
+
             IOUtils.closeQuietly(inputStream);
             IOUtils.closeQuietly(outputStream);
             IOUtils.close(urlConnection);
