@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
+import sexy.kome.spider.container.Container;
+import sexy.kome.spider.container.impl.MemoryCacheContainer;
 import sexy.kome.spider.processer.Processor;
 import sexy.kome.spider.processer.impl.ImageProcessor;
 
@@ -18,41 +20,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Spider {
     private static final Logger RUN_LOG = Logger.getLogger(Spider.class);
     private static final Set<Processor> PROCESSORS = new HashSet<Processor>();
-    private static final Set<String> URL_VISITED = new HashSet<String>();
-    private static final BlockingQueue<String> URL_UNVISITED = new LinkedBlockingQueue<String>();
     public static final int MAX_URL_LENGTH = 100;
+    public static Container CONTAINER;
 
-    private Spider(String originURL, Processor... processors) {
-        URL_UNVISITED.offer(originURL);
+    private Spider(String originURL, Container container, Processor... processors) {
+        CONTAINER = container;
+        CONTAINER.saveUnvisitedDocumentURL(originURL);
 
         for (int i = 0; i < processors.length; i++) {
             PROCESSORS.add(processors[i]);
         }
     }
 
-    private void putURL(String url) {
-        if (!URL_VISITED.contains(url) && !URL_UNVISITED.contains(url)) {
-            URL_UNVISITED.offer(url);
-            RUN_LOG.info(String.format("PUT-URL [UNVISITED=%d, VISITED=%d]", URL_UNVISITED.size(), URL_VISITED.size()));
-        }
-    }
-
-    private String getURL() {
-        try {
-            String url = URL_UNVISITED.take();
-            URL_VISITED.add(url);
-            RUN_LOG.info(String.format("GET-URL [UNVISITED=%d, VISITED=%d]]", URL_UNVISITED.size(), URL_VISITED.size()));
-            return url;
-        } catch (InterruptedException e) {
-            RUN_LOG.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
     private void start() {
         while (true) {
             try {
-                Document document = Jsoup.connect(getURL()).timeout(5000).get();
+                Document document = Jsoup.connect(CONTAINER.getUnvisitedDocumentURL()).timeout(5000).get();
                 document.select("a[href]").forEach(link -> {
 
                     PROCESSORS.forEach(processor -> {
@@ -61,7 +44,7 @@ public class Spider {
 
                     String targetURL = link.attr("abs:href");
                     if (targetURL.length() <= MAX_URL_LENGTH) {
-                        putURL(targetURL);
+                        CONTAINER.saveUnvisitedDocumentURL(targetURL);
                     }
                 });
             } catch (Exception e) {
@@ -72,7 +55,7 @@ public class Spider {
 
     public static void main(String[] args) throws Exception {
         String originURL = args.length > 0 ? args[0] : ConfigHelper.get("spider.source.url");
-        new Spider(originURL, new ImageProcessor()).start();
+        new Spider(originURL, new MemoryCacheContainer(), new ImageProcessor()).start();
     }
 
 }

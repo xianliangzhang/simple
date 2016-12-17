@@ -6,6 +6,7 @@ import org.apache.hadoop.hdfs.util.MD5FileUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
+import sexy.kome.spider.Spider;
 import sexy.kome.spider.processer.Processor;
 
 import java.io.File;
@@ -28,7 +29,6 @@ public class ImageProcessor implements Processor {
     private static final long DEFAULT_MIN_IMAGE_WIDTH = 600; // 默认最小下载1024K的图片
     private static final long DEFAULT_MIN_IMAGE_HEIGHT = 400; // 默认最小下载1024K的图片
     private static final String DEFAULT_IMAGE_SUFFIX = ".jpg,.jpeg,.png,.gif";
-    private static final Set<String> URL_IMAGE_VISITED = new HashSet<String>();
 
     private static final String STORE_IMG_DIR = ConfigHelper.get("spider.img.dir");
     private static final long MIN_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.min.size") ?
@@ -46,13 +46,13 @@ public class ImageProcessor implements Processor {
         document.select("img[src]").forEach(image -> {
             try {
                 String url = image.attr("abs:src");
-                if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !URL_IMAGE_VISITED.contains(url)) {
+                if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !Spider.CONTAINER.hasVisitedImageURL(url)) {
                     RUN_LOG.info(String.format("Start-Process-URL [url=%s]", url));
                     File targetImageFile = rename2md5hex(download(url));
 
                     if (null != targetImageFile) {
-                        URL_IMAGE_VISITED.add(url);
-                        RUN_LOG.info(String.format("PUT-IMAGE-URL [VISITED=%d]", URL_IMAGE_VISITED.size()));
+                        int size = Spider.CONTAINER.saveVisitedImageURL(url);
+                        RUN_LOG.info(String.format("PUT-IMAGE-URL [VISITED=%d]", size));
                     }
                 }
             } catch (Exception e) {
