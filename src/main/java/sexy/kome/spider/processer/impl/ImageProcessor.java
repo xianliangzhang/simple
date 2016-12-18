@@ -12,11 +12,8 @@ import sexy.kome.spider.processer.Processor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -26,8 +23,6 @@ public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
     private static final long DEFAULT_MIN_IMAGE_SIZE = 50 * 1024; // 默认最小下载128K的图片
     private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024 * 10; // 默认最小下载10M的图片
-    private static final long DEFAULT_MIN_IMAGE_WIDTH = 600; // 默认最小下载1024K的图片
-    private static final long DEFAULT_MIN_IMAGE_HEIGHT = 400; // 默认最小下载1024K的图片
     private static final String DEFAULT_IMAGE_SUFFIX = ".jpg,.jpeg,.png,.gif";
 
     private static final String STORE_IMG_DIR = ConfigHelper.get("spider.img.dir");
@@ -35,11 +30,6 @@ public class ImageProcessor implements Processor {
             Long.valueOf(ConfigHelper.get("spider.img.min.size")) : DEFAULT_MIN_IMAGE_SIZE;
     private static final long MAX_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.max.size") ?
             Long.valueOf(ConfigHelper.get("spider.img.max.size")) : DEFAULT_MAX_IMAGE_SIZE;
-
-    private static final long MIN_IMAGE_WIDTH = ConfigHelper.containsKey("spider.img.min.width") ?
-            Long.valueOf(ConfigHelper.get("spider.img.min.width")) : DEFAULT_MIN_IMAGE_WIDTH;
-    private static final long MIN_IMAGE_HEIGHT = ConfigHelper.containsKey("spider.img.max.height") ?
-            Long.valueOf(ConfigHelper.get("spider.img.max.height")) : DEFAULT_MIN_IMAGE_HEIGHT;
 
     @Override
     public void process(Document document) {
