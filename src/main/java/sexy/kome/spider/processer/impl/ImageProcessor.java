@@ -51,8 +51,8 @@ public class ImageProcessor implements Processor {
                     File targetImageFile = rename2md5hex(download(url));
 
                     if (null != targetImageFile) {
-                        int size = Spider.CONTAINER.saveVisitedImageURL(url);
-                        RUN_LOG.info(String.format("PUT-IMAGE-URL [VISITED=%d]", size));
+                        Spider.CONTAINER.saveVisitedImageURL(url);
+                        RUN_LOG.info(String.format("PUT-IMAGE-URL [url=%s]", url));
                     }
                 }
             } catch (Exception e) {
