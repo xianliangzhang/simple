@@ -6,16 +6,18 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.Reader;
-import java.util.HashMap;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Hack on 2016/12/2.
  */
 public class CacheHelper {
     private static final Logger RUN_LOG = Logger.getLogger(CacheHelper.class);
-    private static final Map<DBIdentifier, SqlSessionFactory> SQL_SESSION_FACTORY_MAP = new HashMap<DBIdentifier, SqlSessionFactory>();
+    private static final Map<DBIdentifier, SqlSessionFactory> SQL_SESSION_FACTORY_MAP = new ConcurrentHashMap<DBIdentifier, SqlSessionFactory>();
 
     public enum DBIdentifier {
         KOME, SPIDER
@@ -38,6 +40,17 @@ public class CacheHelper {
             }
         }
         return SQL_SESSION_FACTORY_MAP.get(identifier);
+    }
+
+    public static Connection newConnection(DBIdentifier identifier) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://kome.sexy:3306/kome", ConfigHelper.get("_env.KOME_X"), ConfigHelper.get("_env.KOME_Y"));
+            return connection;
+        } catch (Exception e) {
+            RUN_LOG.error(e.getMessage(), e);
+        }
+        return null;
     }
 
 }

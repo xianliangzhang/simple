@@ -1,5 +1,7 @@
 package sexy.kome.spider.container;
 
+import sexy.kome.spider.container.impl.mapper.SpiderURL;
+
 /**
  * Created by Hack on 2016/12/17.
  */

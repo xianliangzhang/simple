@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.container.Container;
+import sexy.kome.spider.container.impl.DatabaseContainer;
 import sexy.kome.spider.container.impl.MemoryCacheContainer;
 import sexy.kome.spider.processer.Processor;
 import sexy.kome.spider.processer.impl.ImageProcessor;
@@ -55,7 +56,7 @@ public class Spider {
 
     public static void main(String[] args) throws Exception {
         String originURL = args.length > 0 ? args[0] : ConfigHelper.get("spider.source.url");
-        new Spider(originURL, new MemoryCacheContainer(), new ImageProcessor()).start();
+        new Spider(originURL, new DatabaseContainer(), new ImageProcessor()).start();
     }
 
 }
