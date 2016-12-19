@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 public class ImageProcessor implements Processor {
     private static final Logger RUN_LOG = Logger.getLogger(ImageProcessor.class);
-    private static final long DEFAULT_MIN_IMAGE_SIZE = 50 * 1024; // 默认最小下载128K的图片
+    private static final long DEFAULT_MIN_IMAGE_SIZE = 40 * 1024; // 默认最小下载128K的图片
     private static final long DEFAULT_MAX_IMAGE_SIZE = 1024 * 1024 * 10; // 默认最小下载10M的图片
     private static final String DEFAULT_IMAGE_SUFFIX = ".jpg,.jpeg,.png,.gif";
 
@@ -42,7 +42,6 @@ public class ImageProcessor implements Processor {
 
                     if (null != targetImageFile) {
                         Spider.CONTAINER.saveVisitedImageURL(url);
-                        RUN_LOG.info(String.format("PUT-IMAGE-URL [url=%s]", url));
                     }
                 }
             } catch (Exception e) {
