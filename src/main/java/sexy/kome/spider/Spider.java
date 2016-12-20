@@ -5,15 +5,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import sexy.kome.core.helper.ConfigHelper;
 import sexy.kome.spider.container.Container;
-import sexy.kome.spider.container.impl.DatabaseContainer;
 import sexy.kome.spider.container.impl.MemoryCacheContainer;
 import sexy.kome.spider.processer.Processor;
 import sexy.kome.spider.processer.impl.ImageProcessor;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Hack on 2016/11/27.
@@ -36,13 +33,15 @@ public class Spider {
     private void start() {
         while (true) {
             try {
-                Document document = Jsoup.connect(CONTAINER.getUnvisitedDocumentURL()).timeout(5000).get();
+                Document document = Jsoup.connect(CONTAINER.getUnvisitedDocumentURL()).get();
+
+                // 处理文档中感兴趣的元素
+                PROCESSORS.forEach(processor -> {
+                    processor.process(document);
+                });
+
+                // 处理文档中的链接
                 document.select("a[href]").forEach(link -> {
-
-                    PROCESSORS.forEach(processor -> {
-                        processor.process(document);
-                    });
-
                     String targetURL = link.attr("abs:href");
                     if (targetURL.length() <= MAX_URL_LENGTH) {
                         CONTAINER.saveUnvisitedDocumentURL(targetURL);
@@ -56,7 +55,7 @@ public class Spider {
 
     public static void main(String[] args) throws Exception {
         String originURL = args.length > 0 ? args[0] : ConfigHelper.get("spider.source.url");
-        new Spider(originURL, new DatabaseContainer(), new ImageProcessor()).start();
+        new Spider(originURL, new MemoryCacheContainer(), new ImageProcessor()).start();
     }
 
 }

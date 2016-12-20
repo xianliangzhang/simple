@@ -47,6 +47,8 @@ public class MemoryCacheContainer implements Container {
     @Override
     public void saveVisitedImageURL(String url) {
         URL_IMAGE_VISITED.add(url);
+        RUN_LOG.info(String.format("PUT-IMAGE-URL [VISITED=%d]", URL_IMAGE_VISITED.size()));
     }
+
 
 }
