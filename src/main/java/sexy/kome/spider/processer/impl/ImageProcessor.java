@@ -31,17 +31,23 @@ public class ImageProcessor implements Processor {
     private static final long MAX_IMAGE_SIZE = ConfigHelper.containsKey("spider.img.max.size") ?
             Long.valueOf(ConfigHelper.get("spider.img.max.size")) : DEFAULT_MAX_IMAGE_SIZE;
 
+    private Spider context;
+
+    public ImageProcessor (Spider context) {
+        this.context = context;
+    }
+
     @Override
     public void process(Document document) {
         document.select("img[src]").forEach(image -> {
             try {
                 String url = image.attr("abs:src");
-                if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !Spider.CONTAINER.hasVisitedImageURL(url)) {
+                if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !context.getContainer().hasVisitedImageURL(url)) {
                     RUN_LOG.info(String.format("Start-Process-URL [url=%s]", url));
                     File targetImageFile = rename2md5hex(download(url));
 
                     if (null != targetImageFile) {
-                        Spider.CONTAINER.saveVisitedImageURL(url);
+                        context.getContainer().saveVisitedImageURL(url);
                     }
                 }
             } catch (Exception e) {
@@ -106,10 +112,5 @@ public class ImageProcessor implements Processor {
 
     private String getAbsFileName(String fileName) {
         return STORE_IMG_DIR.concat("/").concat(StringUtils.isEmpty(fileName) ? UUID.randomUUID().toString() : fileName);
-    }
-
-    public static void main(String[] args) throws Exception {
-        String temp = "http://www.pp3.cn/uploads/201609/2016092308.jpg";
-        new ImageProcessor().download(temp);
     }
 }

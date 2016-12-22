@@ -2,7 +2,6 @@ package sexy.kome.spider.container.impl;
 
 import org.apache.log4j.Logger;
 import sexy.kome.spider.container.Container;
-import sexy.kome.spider.container.impl.mapper.SpiderURL;
 
 import java.util.HashSet;
 import java.util.Set;

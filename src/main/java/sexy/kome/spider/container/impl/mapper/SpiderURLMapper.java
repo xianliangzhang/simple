@@ -25,6 +25,7 @@ public class SpiderURLMapper {
             RUN_LOG.info("SQL - ".concat(sql));
             synchronized (CONNECTION) {
                 result = CONNECTION.createStatement().execute(sql);
+                CONNECTION.commit();
             }
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -50,20 +51,20 @@ public class SpiderURLMapper {
 
     public String lookupUnvisitedDocumentURL() {
         try {
-            String sql = "select url from spider_url where status = 'UNVISITED' and type = 'IMAGE_URL' limit 1";
-            String update = "update spider_url set status = 'VISITED' where url=%s and type='IMAGE_URL'";
+            String sql = "select url from spider_url where status = 'UNVISITED' and type = 'DOCUMENT_URL' limit 1";
+            String update = "update spider_url set status = 'VISITED' where url='%s' and type='DOCUMENT_URL'";
             ResultSet rs = null;
             synchronized (CONNECTION) {
                 rs = CONNECTION.createStatement().executeQuery(sql);
 
-                rs.next();
-                String targetURL = rs.getString("url");
-
-                if (!StringUtils.isEmpty(targetURL)) {
-                    CONNECTION.createStatement().executeUpdate(String.format(update, targetURL));
+                if (rs.next()) {
+                    String targetURL = rs.getString("url");
+                    if (!StringUtils.isEmpty(targetURL)) {
+                        CONNECTION.createStatement().executeUpdate(String.format(update, targetURL));
+                        CONNECTION.commit();
+                    }
+                    return targetURL;
                 }
-
-                return targetURL;
             }
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);

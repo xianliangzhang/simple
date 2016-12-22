@@ -46,6 +46,7 @@ public class CacheHelper {
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection connection = DriverManager.getConnection("jdbc:mysql://kome.sexy:3306/kome", ConfigHelper.get("_env.KOME_X"), ConfigHelper.get("_env.KOME_Y"));
+            connection.setAutoCommit(false);
             return connection;
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
