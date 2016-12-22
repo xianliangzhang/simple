@@ -51,7 +51,7 @@ public class SpiderURLMapper {
 
     public String lookupUnvisitedDocumentURL() {
         try {
-            String sql = "select url from spider_url where status = 'UNVISITED' and type = 'DOCUMENT_URL' limit 1";
+            String sql = "select url from spider_url where status = 'UNVISITED' and type = 'DOCUMENT_URL' AND length(url)>1 limit 1";
             String update = "update spider_url set status = 'VISITED' where url='%s' and type='DOCUMENT_URL'";
             ResultSet rs = null;
             synchronized (CONNECTION) {
