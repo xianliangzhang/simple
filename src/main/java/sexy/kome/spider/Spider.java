@@ -43,6 +43,7 @@ public class Spider {
             try {
                 String documentURL = container.getUnvisitedDocumentURL();
                 if (StringUtils.isEmpty(documentURL)) {
+                    running = false;
                     throw new RuntimeException("No-More-Unvisited-Document-URL........");
                 }
                 Document document = Jsoup.connect(documentURL).get();
@@ -61,7 +62,6 @@ public class Spider {
                 });
             } catch (Exception e) {
                 RUN_LOG.error(e.getMessage(), e);
-                running = false;
             }
         }
     }
