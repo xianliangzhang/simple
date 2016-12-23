@@ -29,8 +29,4 @@ public class DatabaseContainer implements Container {
     public void saveVisitedImageURL(String url) {
         SPIDER_URL_MAPPER.save(new SpiderURL(SpiderURL.Type.IMAGE_URL, SpiderURL.Status.VISITED, url));
     }
-
-    public static void main(String[] args)  throws Exception {
-        String rs = new DatabaseContainer().getUnvisitedDocumentURL();
-    }
 }
