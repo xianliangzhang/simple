@@ -56,7 +56,7 @@ public class Spider {
                 // 处理文档中的链接
                 document.select("a[href]").forEach(link -> {
                     String targetURL = link.attr("abs:href");
-                    if (targetURL.length() <= MAX_URL_LENGTH) {
+                    if (targetURL.length() <= MAX_URL_LENGTH && (targetURL.endsWith(".html") || targetURL.endsWith(".htm") || targetURL.endsWith(".php"))) {
                         container.saveUnvisitedDocumentURL(targetURL);
                     }
                 });
