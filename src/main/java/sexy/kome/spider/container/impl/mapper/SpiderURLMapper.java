@@ -22,7 +22,6 @@ public class SpiderURLMapper {
         boolean result = false;
         try {
             String sql = String.format(INSERT_MAPPER, spiderURL.getType(), spiderURL.getStatus(), spiderURL.getUrl(), spiderURL.getUrl());
-            RUN_LOG.info("SQL - ".concat(sql));
             synchronized (CONNECTION) {
                 result = CONNECTION.createStatement().execute(sql);
                 CONNECTION.commit();
@@ -36,7 +35,6 @@ public class SpiderURLMapper {
     public boolean isURLExists(String url) {
         try {
             String sql = String.format("select count(*) count from spider_url where url='%s'", url);
-            RUN_LOG.info("SQL - ".concat(sql));
             ResultSet rs = null;
             synchronized (CONNECTION) {
                 rs = CONNECTION.createStatement().executeQuery(sql);
