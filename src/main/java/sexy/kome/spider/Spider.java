@@ -46,7 +46,7 @@ public class Spider {
                     running = false;
                     throw new RuntimeException("No-More-Unvisited-Document-URL........");
                 }
-                Document document = Jsoup.connect(documentURL).get();
+                Document document = Jsoup.connect(documentURL).timeout(3000).get();
 
                 // 处理文档中感兴趣的元素
                 PROCESSORS.forEach(processor -> {
