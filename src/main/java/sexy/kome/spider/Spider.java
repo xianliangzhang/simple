@@ -46,6 +46,7 @@ public class Spider {
                     running = false;
                     throw new RuntimeException("No-More-Unvisited-Document-URL........");
                 }
+                RUN_LOG.info(String.format("Start to process Document-URL: " + documentURL));
                 Document document = Jsoup.connect(documentURL).timeout(3000).get();
 
                 // 处理文档中感兴趣的元素
@@ -56,7 +57,8 @@ public class Spider {
                 // 处理文档中的链接
                 document.select("a[href]").forEach(link -> {
                     String targetURL = link.attr("abs:href");
-                    if (targetURL.length() <= MAX_URL_LENGTH && (targetURL.endsWith(".html") || targetURL.endsWith(".htm") || targetURL.endsWith(".php"))) {
+                    RUN_LOG.info("");
+                    if (targetURL.length() <= MAX_URL_LENGTH && !targetURL.endsWith(".exe")) {
                         container.saveUnvisitedDocumentURL(targetURL);
                     }
                 });

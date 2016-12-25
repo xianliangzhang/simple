@@ -14,7 +14,7 @@
     </environments>
 
     <mappers>
-        <mapper resource="sexy/kome/spider/mapper/SpiderURLMapper.xml"/>
-        <mapper resource="sexy/kome/spider/mapper/SpiderFileMapper.xml"/>
+        <mapper resource="sexy/kome/spider/container/impl/mapper/FileUrlMapper.xml"/>
+        <mapper resource="sexy/kome/spider/container/impl/mapper/DocumentUrlMapper.xml"/>
     </mappers>
 </configuration>

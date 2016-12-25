@@ -6,52 +6,37 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Hack on 2016/12/2.
  */
 public class CacheHelper {
     private static final Logger RUN_LOG = Logger.getLogger(CacheHelper.class);
-    private static final Map<DBIdentifier, SqlSessionFactory> SQL_SESSION_FACTORY_MAP = new ConcurrentHashMap<DBIdentifier, SqlSessionFactory>();
+    private static final SqlSessionFactory SQL_SESSION_FACTORY = getSqlSessionFactory(DBIdentifier.KOME);
 
     public enum DBIdentifier {
-        KOME, SPIDER
+        KOME
     }
 
     private CacheHelper() {
 
     }
 
-    public static SqlSessionFactory getSqlSessionFactory(DBIdentifier identifier) {
-        if (!SQL_SESSION_FACTORY_MAP.containsKey(identifier)) {
-            try {
-                Properties properties = new Properties();
-                properties.setProperty("username", ConfigHelper.get("_env.KOME_X"));
-                properties.setProperty("password", ConfigHelper.get("_env.KOME_Y"));
-                Reader reader = Resources.getResourceAsReader("datasource/".concat(identifier.toString().toLowerCase()).concat(".xml"));
-                SQL_SESSION_FACTORY_MAP.put(identifier, new SqlSessionFactoryBuilder().build(reader, properties));
-            } catch (Exception e) {
-                RUN_LOG.error(e.getMessage(), e);
-            }
-        }
-        return SQL_SESSION_FACTORY_MAP.get(identifier);
-    }
-
-    public static Connection newConnection(DBIdentifier identifier) {
+    private static SqlSessionFactory getSqlSessionFactory(DBIdentifier identifier) {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            Connection connection = DriverManager.getConnection("jdbc:mysql://kome.sexy:3306/kome", ConfigHelper.get("_env.KOME_X"), ConfigHelper.get("_env.KOME_Y"));
-            connection.setAutoCommit(false);
-            return connection;
+            Properties properties = new Properties();
+            properties.setProperty("username", ConfigHelper.get("_env.KOME_X"));
+            properties.setProperty("password", ConfigHelper.get("_env.KOME_Y"));
+            Reader reader = Resources.getResourceAsReader("datasource/".concat(identifier.toString().toLowerCase()).concat(".xml"));
+            return new SqlSessionFactoryBuilder().build(reader, properties);
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
         }
         return null;
     }
 
+    public static SqlSessionFactory getSqlSessionFactory() {
+        return SQL_SESSION_FACTORY;
+    }
 }

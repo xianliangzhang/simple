@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sexy.kome.spider.container.impl.mapper.FileUrlMapper">
+    <resultMap id="FileUrlMap" type="sexy.kome.spider.model.FileUrl">
+        <id property="id" column="id"/>
+        <result property="url" column="url"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="lookupByUrl" resultMap="FileUrlMap">
+        select * from spider_file_url where url=#{0} limit 1
+    </select>
+
+    <insert id="save" parameterType="sexy.kome.spider.model.FileUrl" useGeneratedKeys="true" keyProperty="id">
+        insert into spider_file_url(url, type, create_time)
+          select #{url}, #{type}, now() from spider_file_url
+            where not exists (select * from spider_file_url where url=#{url})
+    </insert>
+</mapper>
