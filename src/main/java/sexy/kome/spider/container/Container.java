@@ -7,8 +7,8 @@ public interface Container  {
     // 保存一条未访问过的页面URL
     void saveUnvisitedDocumentURL(String url);
 
-    // 获取一条未访问过的页面URL
-    String getUnvisitedDocumentURL();
+    // 获取一条未访问过的页面URL,并将其访问状态置为已访问
+    String getAndUpdateNextUnvisitedDocumentURL();
 
     // 查看一条图片链接是否已经访问过
     boolean hasVisitedImageURL(String url);

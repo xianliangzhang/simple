@@ -43,7 +43,7 @@ public class ImageProcessor implements Processor {
             try {
                 String url = image.attr("abs:src");
                 if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !context.getContainer().hasVisitedImageURL(url)) {
-                    RUN_LOG.info(String.format("Start-Process-URL [url=%s]", url));
+                    RUN_LOG.info(String.format("Start to process Image-URL: " + url));
                     File targetImageFile = rename2md5hex(download(url));
 
                     if (null != targetImageFile) {

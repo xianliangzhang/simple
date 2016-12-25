@@ -21,8 +21,8 @@
             where not exists (select * from spider_document_url where url=#{url}) limit 1
     </insert>
 
-    <update id="update" parameterType="sexy.kome.spider.model.DocumentUrl">
-        update spider_document_url set status=#{status}, update_time=now()
-          where id=#{id}
+    <update id="updateStatus">
+        update spider_document_url set status=#{1}, update_time=now()
+          where url = #{0}
     </update>
 </mapper>

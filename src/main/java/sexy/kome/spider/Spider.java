@@ -41,7 +41,7 @@ public class Spider {
     private void start() {
         while (running) {
             try {
-                String documentURL = container.getUnvisitedDocumentURL();
+                String documentURL = container.getAndUpdateNextUnvisitedDocumentURL();
                 if (StringUtils.isEmpty(documentURL)) {
                     running = false;
                     throw new RuntimeException("No-More-Unvisited-Document-URL........");
@@ -57,7 +57,6 @@ public class Spider {
                 // 处理文档中的链接
                 document.select("a[href]").forEach(link -> {
                     String targetURL = link.attr("abs:href");
-                    RUN_LOG.info("");
                     if (targetURL.length() <= MAX_URL_LENGTH && !targetURL.endsWith(".exe")) {
                         container.saveUnvisitedDocumentURL(targetURL);
                     }

@@ -26,7 +26,7 @@ public class MemoryCacheContainer implements Container {
     }
 
     @Override
-    public String getUnvisitedDocumentURL() {
+    public String getAndUpdateNextUnvisitedDocumentURL() {
         try {
             String url = URL_UNVISITED.take();
             URL_VISITED.add(url);

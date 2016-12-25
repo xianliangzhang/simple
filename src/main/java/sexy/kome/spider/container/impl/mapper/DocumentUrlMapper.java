@@ -7,6 +7,6 @@ import sexy.kome.spider.model.DocumentUrl;
  */
 public interface DocumentUrlMapper {
     void save(DocumentUrl doc);
-    void update(DocumentUrl doc);
+    void updateStatus(String url, String status);
     DocumentUrl lookupNextUnvisitedUrl();
 }

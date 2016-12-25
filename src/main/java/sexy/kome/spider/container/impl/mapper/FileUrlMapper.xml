@@ -16,7 +16,7 @@
 
     <insert id="save" parameterType="sexy.kome.spider.model.FileUrl" useGeneratedKeys="true" keyProperty="id">
         insert into spider_file_url(url, type, create_time)
-          select #{url}, #{type}, now() from spider_file_url
-            where not exists (select * from spider_file_url where url=#{url})
+          select #{url}, #{type}, now() from dual
+            where not exists (select * from spider_file_url where url=#{url}) limit 1
     </insert>
 </mapper>

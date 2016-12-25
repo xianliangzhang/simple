@@ -1,5 +1,6 @@
 package sexy.kome.spider.container.impl;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import sexy.kome.core.helper.CacheHelper;
@@ -18,8 +19,7 @@ public class DatabaseContainer implements Container {
     @Override
     public void saveUnvisitedDocumentURL(String url) {
         try (SqlSession session = CacheHelper.getSqlSessionFactory().openSession()) {
-            DocumentUrlMapper mapper = session.getMapper(DocumentUrlMapper.class);
-            mapper.save( new DocumentUrl(url) );
+            session.getMapper(DocumentUrlMapper.class).save( new DocumentUrl(url) );
             session.commit();
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -27,10 +27,16 @@ public class DatabaseContainer implements Container {
     }
 
     @Override
-    public String getUnvisitedDocumentURL() {
+    public String getAndUpdateNextUnvisitedDocumentURL() {
         try (SqlSession session = CacheHelper.getSqlSessionFactory().openSession()) {
             DocumentUrlMapper mapper = session.getMapper(DocumentUrlMapper.class);
+
             DocumentUrl documentUrl = mapper.lookupNextUnvisitedUrl();
+            if (null != documentUrl && !StringUtils.isEmpty(documentUrl.getUrl())) {
+                mapper.updateStatus(documentUrl.getUrl(), DocumentUrl.STATUS_VISITED);
+            }
+
+            session.commit();
             return documentUrl == null ? null : documentUrl.getUrl();
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -38,11 +44,19 @@ public class DatabaseContainer implements Container {
         return null;
     }
 
+    public void updateDocumentURLStatus(String url, String status) {
+        try (SqlSession session = CacheHelper.getSqlSessionFactory().openSession()) {
+            session.getMapper(DocumentUrlMapper.class).updateStatus(url, status);
+            session.commit();
+        } catch (Exception e) {
+            RUN_LOG.error(e.getMessage(), e);
+        }
+    }
+
     @Override
     public boolean hasVisitedImageURL(String url) {
         try (SqlSession session = CacheHelper.getSqlSessionFactory().openSession()) {
-            FileUrlMapper mapper = session.getMapper(FileUrlMapper.class);
-            FileUrl fileUrl = mapper.lookupByUrl(url);
+            FileUrl fileUrl = session.getMapper(FileUrlMapper.class).lookupByUrl(url);
             return fileUrl != null;
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -53,8 +67,7 @@ public class DatabaseContainer implements Container {
     @Override
     public void saveVisitedImageURL(String url) {
         try (SqlSession session = CacheHelper.getSqlSessionFactory().openSession()) {
-            FileUrlMapper mapper = session.getMapper(FileUrlMapper.class);
-            mapper.save( new FileUrl(url) );
+            session.getMapper(FileUrlMapper.class).save( new FileUrl(url) );
             session.commit();
         } catch (Exception e) {
             RUN_LOG.error(e.getMessage(), e);
@@ -66,9 +79,9 @@ public class DatabaseContainer implements Container {
         container.saveUnvisitedDocumentURL("xx");
         RUN_LOG.info("Saved-Document-URL: xx");
 
-        String xx = container.getUnvisitedDocumentURL();
+        String xx = container.getAndUpdateNextUnvisitedDocumentURL();
         RUN_LOG.info("Load-Unvisited-Document-URL: " + xx);
-
+//
 //        container.saveVisitedImageURL("yy");
 //        RUN_LOG.info("Saved-Image-URL: yy");
 //
