@@ -57,7 +57,7 @@ public class Spider {
                 // 处理文档中的链接
                 document.select("a[href]").forEach(link -> {
                     String targetURL = link.attr("abs:href");
-                    if (targetURL.length() <= MAX_URL_LENGTH && !targetURL.endsWith(".exe")) {
+                    if (!StringUtils.isEmpty(targetURL) && targetURL.length() <= MAX_URL_LENGTH && !targetURL.endsWith(".exe")) {
                         container.saveUnvisitedDocumentURL(targetURL);
                     }
                 });
@@ -74,6 +74,7 @@ public class Spider {
     public static void main(String[] args) throws Exception {
         String originURL = args.length > 0 ? args[0] : ConfigHelper.get("spider.source.url");
         new Spider(originURL, new DatabaseContainer(), ImageProcessor.class).start();
+
     }
 
 }

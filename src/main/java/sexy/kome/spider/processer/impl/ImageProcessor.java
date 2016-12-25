@@ -42,7 +42,7 @@ public class ImageProcessor implements Processor {
         document.select("img[src]").forEach(image -> {
             try {
                 String url = image.attr("abs:src");
-                if (url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !context.getContainer().hasVisitedImageURL(url)) {
+                if (!StringUtils.isEmpty(url) && url.length() < 100 && url.contains(".") && DEFAULT_IMAGE_SUFFIX.contains(url.substring(url.lastIndexOf("."))) && !context.getContainer().hasVisitedImageURL(url)) {
                     RUN_LOG.info(String.format("Start to process Image-URL: " + url));
                     File targetImageFile = rename2md5hex(download(url));
 
